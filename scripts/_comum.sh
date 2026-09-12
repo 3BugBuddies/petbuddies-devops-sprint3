@@ -29,7 +29,7 @@ REPO_NET="https://github.com/3BugBuddies/PetBuddies-API.git#main:PetBuddies-API"
 # Raiz do repositório. BASH_SOURCE não existe em zsh, então há fallback e uma
 # conferência: sem ela, um source fora do bash resolve a pasta errada em silêncio.
 ROOT="${PETBUDDIES_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." 2>/dev/null && pwd)}"
-if [ ! -d "$ROOT/oracle" ]; then
+if [ ! -d "$ROOT/database" ]; then
   echo "ERRO: ROOT resolvido como '$ROOT', que não é a raiz do repo." >&2
   echo "Rode com bash, ou exporte PETBUDDIES_ROOT=/caminho/para/petbuddies-devops" >&2
   return 1 2>/dev/null || exit 1

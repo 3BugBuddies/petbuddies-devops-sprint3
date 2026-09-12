@@ -96,6 +96,10 @@ docker compose down -v            # derruba e APAGA o volume
 
 A imagem do Oracle é amd64, então em Mac ARM ela roda emulada e sobe devagar. Na nuvem é nativo.
 
+> Cada script pode gravar a própria saída, o que deixa a evidência da execução em arquivo:
+> `./scripts/01_acr.sh > 01_acr.log`. Os `.log` ficam fora do Git — eles ecoam nome de recurso e
+> saída bruta da CLI.
+
 ### 3. Conferir o ambiente
 
 ```bash
@@ -216,9 +220,35 @@ curl -X PUT $BASE/api/animal/1 -H "Authorization: Bearer $TOKEN" -H 'Content-Typ
 curl -X DELETE $BASE/api/animal/1 -H "Authorization: Bearer $TOKEN"
 ```
 
+### Acompanhar e inspecionar os containers
+
+```bash
+# saída da aplicação
+az container logs --resource-group rg-petbuddies-devops --name rm565339-api-java
+az container logs --resource-group rg-petbuddies-devops --name rm565339-api-java --follow
+
+# abrir um shell dentro do container
+az container exec --resource-group rg-petbuddies-devops --name rm565339-api-java --exec-command "/bin/sh"
+
+# estado de todos os containers do grupo
+az container list --resource-group rg-petbuddies-devops --output table
+```
+
 ### Evidência de persistência — SELECT direto no banco
 
-Conecte em `petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1` com o usuário
+Há dois caminhos, e os dois valem como evidência.
+
+**a) Pelo próprio container**, sem instalar nada na máquina — o `sqlplus` já vive na imagem:
+
+```bash
+az container exec --resource-group rg-petbuddies-devops --name rm565339-oracle \
+  --exec-command "/bin/bash"
+
+# já dentro do container:
+sqlplus PETBUDDIES_CUIDADO/<senha>@localhost:1521/XEPDB1
+```
+
+**b) De um cliente externo** (SQL Developer, DataGrip), conectando em `petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1` com o usuário
 `PETBUDDIES_CUIDADO` e execute, após cada operação:
 
 ```sql
