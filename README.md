@@ -54,7 +54,7 @@ própria API.
 
 ![Arquitetura da solução na Azure](docs/arquitetura.png)
 
-O **Key Vault** guarda os seis segredos (usuário e senha do banco, segredo JWT, chave da IA e as
+O **Key Vault** guarda os sete segredos (usuário e senha do banco, segredo JWT, chave da IA e as
 credenciais do registry). Nenhum deles aparece em script, log ou variável visível: os scripts os leem do cofre no
 momento do `az container create` e os injetam como `--secure-environment-variables`.
 

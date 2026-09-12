@@ -13,7 +13,7 @@ services:
     container_name: petbuddies_oracle
     env_file: [.env]
     environment:
-      ORACLE_RANDOM_PASSWORD: "yes"
+      ORACLE_PASSWORD: ${ORACLE_ROOT_PASSWORD}
       ORACLE_CHARACTERSET: AL32UTF8
       APP_USER: ${ORACLE_USER_CUIDADO}
       APP_USER_PASSWORD: ${ORACLE_PASSWORD_CUIDADO}

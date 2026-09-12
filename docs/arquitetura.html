@@ -1,76 +1,67 @@
 <title>PetBuddies · Arquitetura Azure</title>
 <style>
-  :root{
-    --tinta:#10233b; --fraca:#61738a; --linha:#dbe3ec; --papel:#fff;
-    --laranja:#e8722c; --azure-fraco:#e9f2fb; --azure-borda:#93c2e8;
-    --local:#fdeee4; --local-borda:#eeb994; --aci:#ecf7f1; --aci-borda:#9ed3b6;
-  }
+  :root{ --tinta:#10233b; --fraca:#5b6e85; --azul:#0f6cbd; --azul-esc:#0a4d8c;
+         --borda:#b8d4ec; --claro:#eef6fd; --verde:#1e9e5a; --roxo:#6b4fa8; }
   *{box-sizing:border-box}
-  body{background:var(--papel);color:var(--tinta);
-       font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-       padding:24px;width:1248px;margin:0 auto}
-  h1{font-size:22px;margin:0 0 3px;letter-spacing:-.015em}
-  .sub{color:var(--fraca);font-size:12.5px;margin:0 0 20px}
-  code{font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
-       background:#eef3f8;padding:2px 6px;border-radius:5px;color:#1b3a5c;white-space:nowrap}
+  body{background:#fff;color:var(--tinta);width:1248px;margin:0 auto;padding:20px 20px 24px;
+       font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   svg.ico{display:block;flex:none}
+  code{font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef3f8;
+       padding:1px 5px;border-radius:4px;color:#14395e}
 
-  .palco{display:grid;grid-template-columns:286px 92px 1fr;align-items:start}
+  .topo{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+  h1{font-size:19px;margin:0 0 2px;letter-spacing:-.01em}
+  .sub{color:var(--fraca);font-size:12px;margin:0}
+  .marca{display:flex;align-items:center;gap:8px;background:var(--azul);color:#fff;
+         padding:7px 14px;border-radius:22px;font-weight:700;font-size:13px}
 
-  .zona{border-radius:14px;padding:16px 14px}
-  .local{background:var(--local);border:2px solid var(--local-borda)}
-  .nuvem{background:var(--azure-fraco);border:2px solid var(--azure-borda)}
-  .aci{background:var(--aci);border:2px solid var(--aci-borda);border-radius:12px;
-       padding:14px 12px;margin-top:12px}
-  .tit{display:flex;align-items:center;gap:8px;margin-bottom:13px}
-  .tit .nm{font-size:11.5px;font-weight:800;letter-spacing:.09em;
-           text-transform:uppercase;color:var(--fraca)}
+  /* painel no padrão do professor: barra de título sólida + corpo branco */
+  .painel{border:1.5px solid var(--borda);border-radius:9px;overflow:hidden;background:#fff}
+  .painel > .barra{background:var(--azul);color:#fff;font-weight:700;font-size:12px;
+                   padding:6px 11px;display:flex;align-items:center;gap:7px}
+  .painel > .corpo{padding:10px}
+  .roxa > .barra{background:var(--roxo)}
+  .verde > .barra{background:var(--verde)}
 
-  .tiles{display:grid;gap:9px}
-  .t2{grid-template-columns:1fr 1fr}
-  .tile{position:relative;background:#fff;border:2px solid var(--linha);border-radius:11px;
-        padding:13px 10px 11px;display:flex;flex-direction:column;align-items:center;
-        gap:7px;text-align:center;box-shadow:0 1px 3px rgba(16,35,59,.06)}
-  .tile .lb{font-weight:700;font-size:13px;line-height:1.25}
-  .tile .ds{color:var(--fraca);font-size:11px;line-height:1.3;margin-top:-2px}
-  .tile code{font-size:10.5px}
-  .tile .n{position:absolute;top:-9px;left:-9px}
+  .tracejado{border:2px dashed var(--azul);border-radius:11px;padding:11px;background:var(--claro)}
+  .tracejado > .rot{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;
+                    color:var(--azul-esc);margin-bottom:9px}
 
-  .n{display:inline-flex;align-items:center;justify-content:center;flex:none;
-     width:24px;height:24px;border-radius:50%;background:var(--laranja);
-     color:#fff;font-size:13px;font-weight:800;box-shadow:0 0 0 3px #fff}
+  .check{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tinta);margin-top:4px}
+  .nome{font-weight:700;font-size:13px}
+  .desc{color:var(--fraca);font-size:11.5px;margin-top:1px}
 
-  .via{position:relative;height:330px}
-  .fio{position:absolute;left:8px;width:80px;display:flex;align-items:center}
-  .fio .h{height:3px;background:#8ea2b7;flex:1;border-radius:2px}
-  .fio .p{width:0;height:0;border-top:7px solid transparent;
-          border-bottom:7px solid transparent;border-left:11px solid #8ea2b7}
-  .fio .s{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
-  .fio .lg{position:absolute;left:-4px;width:88px;top:-22px;text-align:center;
-           font-size:10.5px;color:var(--fraca);white-space:nowrap}
+  .cena{display:grid;grid-template-columns:120px 112px 1fr;column-gap:8px;align-items:center}
+  .disp{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .disp .item{text-align:center}
+  .disp .item span{display:block;font-size:11.5px;font-weight:650;margin-top:3px}
 
-  .elo{display:flex;align-items:center;justify-content:center;gap:9px;
-       margin:9px 0;font-size:10.5px;color:var(--fraca)}
-  .elo .b{width:3px;height:20px;background:#bacadb;border-radius:2px}
+  .fio{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .fio .tubo{display:flex;align-items:center;width:100%}
+  .fio .tubo i{flex:1;height:3px;background:var(--azul);display:block;border-radius:2px}
+  .fio .tubo u{width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;
+               border-left:9px solid var(--azul);display:block}
+  .fio .et{font-size:10.5px;color:var(--fraca);text-align:center;line-height:1.25}
 
-  .atores{display:flex;gap:10px;margin-bottom:14px}
-  .ator{flex:1;display:flex;align-items:center;gap:11px;background:#fff;
-        border:2px solid var(--linha);border-radius:11px;padding:10px 14px}
-  .ator .q{font-weight:700;font-size:13.5px}
-  .ator .o{color:var(--fraca);font-size:11.5px;margin-top:1px}
+  .duplo{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .base{display:grid;grid-template-columns:250px 92px 1fr 1fr;gap:9px;margin-top:12px;align-items:stretch}
+  .ferramentas{display:flex;gap:14px;justify-content:space-around;align-items:flex-start}
+  .ferramentas .f{text-align:center;font-size:11px;font-weight:600;width:66px}
+  .ferramentas .f svg{margin:0 auto 3px}
 
-  .saida{margin-top:12px;background:#fff;border:2px solid var(--azure-borda);
-         border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:22px}
-  .rota{display:flex;align-items:center;gap:9px;font-size:12.5px}
-  .rota .st{flex:none;display:flex;align-items:center}
-  .rota .st i{width:34px;height:3px;background:var(--laranja);display:block;border-radius:2px}
-  .rota .st u{width:0;height:0;border-top:6px solid transparent;
-              border-bottom:6px solid transparent;border-left:10px solid var(--laranja);display:block}
+  .benef{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .benef .b{text-align:center;font-size:10.5px;font-weight:600;line-height:1.25}
+  .benef .b svg{margin:0 auto 4px}
 
-  ol{margin:20px 0 0;padding:0;list-style:none;
-     display:grid;grid-template-columns:1fr 1fr;gap:8px 30px}
-  ol li{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.4}
-  ol .n{width:21px;height:21px;font-size:11.5px;box-shadow:none;margin-top:1px}
+  .trilha{display:flex;gap:6px;margin-top:14px}
+  .passo{flex:1;display:flex;align-items:center;gap:9px;color:#fff;font-weight:700;font-size:12.5px;
+         padding:9px 14px 9px 18px;position:relative;
+         clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%,15px 50%)}
+  .passo:first-child{clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%);
+                     padding-left:14px}
+  .passo .num{width:21px;height:21px;border-radius:50%;background:rgba(255,255,255,.28);
+              display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+  .p1{background:var(--azul)} .p2{background:var(--roxo)} .p3{background:var(--verde)}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="i-docker" viewBox="0 0 32 32">
@@ -144,90 +135,159 @@
   <symbol id="i-nuvem" viewBox="0 0 40 24">
     <path fill="#0f6cbd" d="M31 21H10.5A7.5 7.5 0 0 1 9.7 6.1 10 10 0 0 1 28.6 8.4 6.3 6.3 0 0 1 31 21z"/>
   </symbol>
+</defs></svg><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-laptop" viewBox="0 0 32 32">
+    <rect x="5" y="7" width="22" height="15" rx="1.6" fill="#0f6cbd"/>
+    <rect x="6.6" y="8.6" width="18.8" height="11.6" fill="#cfe4f7"/>
+    <path d="M2.5 23.5h27l-1.6 2.2a1.4 1.4 0 0 1-1.1.55H5.2a1.4 1.4 0 0 1-1.1-.55z" fill="#2b8ad4"/>
+  </symbol>
+  <symbol id="i-mobile" viewBox="0 0 32 32">
+    <rect x="9" y="3" width="14" height="26" rx="2.6" fill="#0f6cbd"/>
+    <rect x="10.6" y="6.4" width="10.8" height="18" fill="#cfe4f7"/>
+    <circle cx="16" cy="26.4" r="1.1" fill="#cfe4f7"/>
+  </symbol>
+  <symbol id="i-internet" viewBox="0 0 40 26">
+    <path fill="#5aa4de" d="M31 22H10.5A7.5 7.5 0 0 1 9.7 7.1 10 10 0 0 1 28.6 9.4 6.3 6.3 0 0 1 31 22z"/>
+    <circle cx="20" cy="14" r="5.4" fill="none" stroke="#fff" stroke-width="1.3"/>
+    <path d="M14.6 14h10.8M20 8.6c2.4 2.9 2.4 8 0 10.8-2.4-2.9-2.4-8 0-10.8z" stroke="#fff" stroke-width="1.3" fill="none"/>
+  </symbol>
+  <symbol id="i-lock" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="14" fill="#1e9e5a"/>
+    <rect x="10.5" y="14.5" width="11" height="9.5" rx="1.8" fill="#fff"/>
+    <path d="M12.7 14.5v-3a3.3 3.3 0 0 1 6.6 0v3" stroke="#fff" stroke-width="2.1" fill="none"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 20 20">
+    <circle cx="10" cy="10" r="9" fill="#1e9e5a"/>
+    <path d="M5.6 10.2l2.9 2.9 5.9-5.9" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-globo" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="13" fill="#0f6cbd"/>
+    <circle cx="16" cy="16" r="13" fill="none" stroke="#fff" stroke-width="1.5"/>
+    <path d="M3 16h26M16 3c4.5 5.6 4.5 19.4 0 26-4.5-6.6-4.5-20.4 0-26z" stroke="#fff" stroke-width="1.5" fill="none"/>
+  </symbol>
+  <symbol id="i-grafico" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="13" fill="#0f6cbd"/>
+    <rect x="9" y="17" width="3.4" height="7" rx="1" fill="#fff"/>
+    <rect x="14.3" y="12.5" width="3.4" height="11.5" rx="1" fill="#fff"/>
+    <rect x="19.6" y="8.5" width="3.4" height="15.5" rx="1" fill="#fff"/>
+  </symbol>
+  <symbol id="i-escudo" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="13" fill="#0f6cbd"/>
+    <path d="M16 7.5l6.5 2.6v5.4c0 3.9-2.7 7-6.5 8-3.8-1-6.5-4.1-6.5-8v-5.4z" fill="#fff"/>
+    <path d="M13.3 16.3l2 2 3.7-3.8" stroke="#0f6cbd" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="i-relogio" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="13" fill="#0f6cbd"/>
+    <path d="M16 8.5V16l5 3" stroke="#fff" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-codigo" viewBox="0 0 32 32">
+    <rect x="4" y="6" width="24" height="17" rx="2" fill="#0f6cbd"/>
+    <rect x="5.6" y="7.6" width="20.8" height="13.8" fill="#eaf3fb"/>
+    <path d="M12 11.5L9 14.5l3 3M20 11.5l3 3-3 3M17 10.6l-2 7.8" stroke="#0f6cbd" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M2.5 24.5h27l-1.5 2a1.3 1.3 0 0 1-1 .5H5a1.3 1.3 0 0 1-1-.5z" fill="#2b8ad4"/>
+  </symbol>
 </defs></svg>
-<h1>PetBuddies — arquitetura da solução na Azure</h1>
-<p class="sub">Sprint 3 · Java Advanced · aplicação e banco containerizados em ACR + ACI ·
-grupo de recursos <code>rg-petbuddies-devops</code> · região <code>chilecentral</code></p>
 
-<div class="atores">
-  <div class="ator"><svg class="ico" width="38" height="38"><use href="#i-user"/></svg>
-    <div><div class="q">Tutor e veterinária</div><div class="o">usam a API pelo aplicativo</div></div></div>
-  <div class="ator"><svg class="ico" width="38" height="38"><use href="#i-dev"/></svg>
-    <div><div class="q">Desenvolvedor</div><div class="o">constrói as imagens e provisiona pela CLI</div></div></div>
+<div class="topo">
+  <div><h1>PetBuddies — arquitetura da solução na Azure</h1>
+    <p class="sub">Sprint 3 · Java Advanced · aplicação e banco containerizados em ACR + ACI</p></div>
+  <div class="marca"><svg class="ico" width="20" height="20"><use href="#i-azure"/></svg>Microsoft Azure</div>
 </div>
 
-<div class="palco">
-  <div class="zona local">
-    <div class="tit"><svg class="ico" width="22" height="22"><use href="#i-dev"/></svg>
-      <span class="nm">Máquina local</span></div>
-    <div class="tiles t2">
-      <div class="tile"><span class="n">1</span>
-        <svg class="ico" width="46" height="46"><use href="#i-folder"/></svg>
-        <span class="lb">Repositório</span><span class="ds">Dockerfiles, scripts e <code>.env</code></span></div>
-      <div class="tile"><span class="n">2</span>
-        <svg class="ico" width="46" height="46"><use href="#i-docker"/></svg>
-        <span class="lb">Docker</span><span class="ds">build em <code>linux/amd64</code></span></div>
-      <div class="tile"><span class="n">4</span>
-        <svg class="ico" width="46" height="46"><use href="#i-cli"/></svg>
-        <span class="lb">Azure CLI</span><span class="ds">cria todos os recursos</span></div>
-      <div class="tile">
-        <svg class="ico" width="46" height="46"><use href="#i-github"/></svg>
-        <span class="lb">GitHub</span><span class="ds">origem do código</span></div>
-    </div>
+<div class="cena">
+  <div class="disp">
+    <div class="item"><svg class="ico" width="52" height="52"><use href="#i-laptop"/></svg>
+      <span>Navegador</span></div>
+    <div class="item"><svg class="ico" width="38" height="38"><use href="#i-mobile"/></svg>
+      <span>Mobile</span></div>
   </div>
 
-  <div class="via">
-    <div class="fio" style="top:66px"><div class="lg">docker push</div>
-      <div class="h"></div><div class="p"></div><span class="s n">3</span></div>
-    <div class="fio" style="top:172px"><div class="lg">az cli</div>
-      <div class="h"></div><div class="p"></div><span class="s n">4</span></div>
+  <div class="fio">
+    <svg class="ico" width="56" height="36"><use href="#i-internet"/></svg>
+    <div class="et"><b>Internet</b></div>
+    <svg class="ico" width="24" height="24"><use href="#i-lock"/></svg>
+    <div class="et">HTTP<br>porta 8080</div>
+    <div class="tubo"><i></i><u></u></div>
   </div>
 
-  <div class="zona nuvem">
-    <div class="tit"><svg class="ico" width="24" height="24"><use href="#i-azure"/></svg>
-      <span class="nm">Microsoft Azure</span>
-      <svg class="ico" width="36" height="22" style="margin-left:auto;opacity:.35"><use href="#i-nuvem"/></svg></div>
+  <div class="tracejado">
+    <div class="rot"><svg class="ico" width="19" height="19"><use href="#i-acr"/></svg>
+      Resource Group <code>rg-petbuddies-devops</code> &nbsp;·&nbsp; região <code>chilecentral</code></div>
 
-    <div class="tiles t2">
-      <div class="tile"><span class="n">3</span>
-        <svg class="ico" width="50" height="50"><use href="#i-acr"/></svg>
-        <span class="lb">Container Registry</span><span class="ds">guarda as duas imagens</span><code>petbuddiesrm565339</code></div>
-      <div class="tile">
-        <svg class="ico" width="50" height="50"><use href="#i-vault"/></svg>
-        <span class="lb">Key Vault</span><span class="ds">senhas do banco, segredo JWT<br>e credenciais do registry</span><code>kv-petbuddies-rm565339</code></div>
+    <div class="duplo">
+      <div class="painel"><div class="barra">
+        <svg class="ico" width="15" height="15"><use href="#i-acr"/></svg>Container Registry</div>
+        <div class="corpo">
+          <div class="nome">petbuddiesrm565339</div>
+          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>SKU Basic</div>
+          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>guarda as duas imagens</div>
+        </div></div>
+
+      <div class="painel roxa"><div class="barra">
+        <svg class="ico" width="15" height="15"><use href="#i-vault"/></svg>Key Vault</div>
+        <div class="corpo">
+          <div class="nome">kv-petbuddies-rm565339</div>
+          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>sete segredos</div>
+          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>nada de senha em código</div>
+        </div></div>
     </div>
 
-    <div class="aci">
-      <div class="tit" style="margin-bottom:11px">
-        <svg class="ico" width="22" height="22"><use href="#i-aci"/></svg>
-        <span class="nm">Container Instances</span></div>
-      <div class="tiles t2">
-        <div class="tile"><span class="n">5</span>
-          <svg class="ico" width="52" height="52"><use href="#i-oracle"/></svg>
-          <span class="lb">Oracle XE 21c</span><span class="ds">2 vCPU · 4 GB · 16 tabelas<br>porta pública para o SELECT</span><code>1521</code></div>
-        <div class="tile"><span class="n">6</span>
-          <svg class="ico" width="52" height="52"><use href="#i-spring"/></svg>
-          <span class="lb">API de cuidado</span><span class="ds">Java 21 · Spring Boot 3.4<br>1 vCPU · 2 GB</span><code>8080</code></div>
-      </div>
-      <div class="elo"><span class="b"></span>JDBC · schema <code>PETBUDDIES_CUIDADO</code><span class="b"></span></div>
-    </div>
-
-    <div class="saida">
-      <span class="n">7</span>
-      <div class="rota"><svg class="ico" width="26" height="26"><use href="#i-user"/></svg>
-        <span class="st"><i></i><u></u></span><span>API</span><code>HTTP 8080</code></div>
-      <div class="rota"><svg class="ico" width="26" height="26"><use href="#i-oracle"/></svg>
-        <span class="st"><i></i><u></u></span><span>SELECT</span><code>TCP 1521</code></div>
-    </div>
+    <div class="painel verde" style="margin-top:9px"><div class="barra">
+      <svg class="ico" width="15" height="15"><use href="#i-aci"/></svg>Azure Container Instances</div>
+      <div class="corpo duplo">
+        <div class="painel"><div class="corpo" style="display:flex;gap:10px">
+          <svg class="ico" width="42" height="42"><use href="#i-oracle"/></svg>
+          <div><div class="nome">Oracle XE 21c</div>
+            <div class="desc">porta <code>1521</code> pública</div>
+            <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>2 vCPU · 4 GB</div>
+            <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>16 tabelas pelo Flyway</div>
+          </div></div></div>
+        <div class="painel"><div class="corpo" style="display:flex;gap:10px">
+          <svg class="ico" width="42" height="42"><use href="#i-spring"/></svg>
+          <div><div class="nome">API de cuidado</div>
+            <div class="desc">porta <code>8080</code></div>
+            <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Java 21 · Spring Boot 3.4</div>
+            <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>1 vCPU · 2 GB</div>
+          </div></div></div>
+      </div></div>
   </div>
 </div>
 
-<ol>
-  <li><span class="n">1</span><span>Clone do repositório e <code>.env</code> preenchido; o <code>00_preflight.sh</code> confere sessão, providers e quota</span></li>
-  <li><span class="n">2</span><span><code>docker build --platform linux/amd64</code> — o ACI executa somente amd64</span></li>
-  <li><span class="n">3</span><span><code>docker push</code> das duas imagens para o registry criado por <code>az acr create</code></span></li>
-  <li><span class="n">4</span><span>A Azure CLI cria grupo, cofre e containers — nada pelo portal</span></li>
-  <li><span class="n">5</span><span>Cada container puxa a imagem com a credencial do cofre, que também injeta as senhas</span></li>
-  <li><span class="n">6</span><span>Na subida da API, o Flyway cria as 16 tabelas e a carga de demonstração</span></li>
-  <li><span class="n">7</span><span>Consumo por HTTP na 8080; persistência evidenciada por SELECT na 1521</span></li>
-</ol>
+<div class="base">
+  <div class="painel"><div class="barra">
+    <svg class="ico" width="15" height="15"><use href="#i-codigo"/></svg>Desenvolvimento local</div>
+    <div class="corpo ferramentas">
+      <div class="f"><svg class="ico" width="30" height="30"><use href="#i-codigo"/></svg>Código-fonte</div>
+      <div class="f"><svg class="ico" width="30" height="30"><use href="#i-docker"/></svg>Dockerfile</div>
+      <div class="f"><svg class="ico" width="30" height="30"><use href="#i-cli"/></svg>Scripts CLI</div>
+    </div></div>
+
+  <div class="fio" style="justify-content:center">
+    <svg class="ico" width="46" height="30"><use href="#i-nuvem"/></svg>
+    <div class="et"><b>Deploy</b></div>
+    <div class="tubo"><i></i><u></u></div>
+  </div>
+
+  <div class="painel"><div class="barra">
+    <svg class="ico" width="15" height="15"><use href="#i-github"/></svg>Implantação</div>
+    <div class="corpo ferramentas">
+      <div class="f"><svg class="ico" width="30" height="30"><use href="#i-github"/></svg>GitHub</div>
+      <div class="f"><svg class="ico" width="30" height="30"><use href="#i-cli"/></svg>Azure CLI</div>
+      <div class="f"><svg class="ico" width="30" height="30"><use href="#i-acr"/></svg>acr import</div>
+    </div></div>
+
+  <div class="painel"><div class="barra">
+    <svg class="ico" width="15" height="15"><use href="#i-check"/></svg>Benefícios</div>
+    <div class="corpo benef">
+      <div class="b"><svg class="ico" width="28" height="28"><use href="#i-globo"/></svg>Acesso<br>global</div>
+      <div class="b"><svg class="ico" width="28" height="28"><use href="#i-grafico"/></svg>Recursos<br>sob medida</div>
+      <div class="b"><svg class="ico" width="28" height="28"><use href="#i-escudo"/></svg>Segredos<br>no cofre</div>
+      <div class="b"><svg class="ico" width="28" height="28"><use href="#i-relogio"/></svg>Ambiente<br>em 8 min</div>
+    </div></div>
+</div>
+
+<div class="trilha">
+  <div class="passo p1"><span class="num">1</span>Criar registry e cofre</div>
+  <div class="passo p2"><span class="num">2</span>Publicar as imagens no ACR</div>
+  <div class="passo p3"><span class="num">3</span>Subir banco e API no ACI</div>
+</div>
