@@ -1,85 +1,76 @@
 <title>PetBuddies · Arquitetura Azure</title>
 <style>
   :root{
-    --tinta:#10233b; --fraca:#5f7186; --linha:#d7e0ea; --papel:#fff;
-    --laranja:#e8722c; --azure:#0f6cbd; --azure-fraco:#eaf3fb; --azure-borda:#9cc6e8;
-    --local:#fdefe6; --local-borda:#f0bd97; --aci:#eef7f1; --aci-borda:#a8d5ba;
+    --tinta:#10233b; --fraca:#61738a; --linha:#dbe3ec; --papel:#fff;
+    --laranja:#e8722c; --azure-fraco:#e9f2fb; --azure-borda:#93c2e8;
+    --local:#fdeee4; --local-borda:#eeb994; --aci:#ecf7f1; --aci-borda:#9ed3b6;
   }
   *{box-sizing:border-box}
   body{background:var(--papel);color:var(--tinta);
-       font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-       padding:22px;width:1252px;margin:0 auto}
-  h1{font-size:20px;margin:0 0 3px;letter-spacing:-.01em}
+       font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       padding:24px;width:1248px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 3px;letter-spacing:-.015em}
   .sub{color:var(--fraca);font-size:12.5px;margin:0 0 20px}
-  code{font:11.5px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
-       background:#f1f5f9;padding:1px 5px;border-radius:4px;color:#1b3a5c}
+  code{font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;
+       background:#eef3f8;padding:2px 6px;border-radius:5px;color:#1b3a5c;white-space:nowrap}
   svg.ico{display:block;flex:none}
 
-  .palco{display:grid;grid-template-columns:252px 92px 1fr;align-items:start}
-  .zona{border-radius:12px;padding:13px}
-  .cabeca{display:flex;align-items:center;gap:7px;margin-bottom:11px}
-  .cabeca .nome{font-size:11px;font-weight:750;letter-spacing:.08em;
-                text-transform:uppercase;color:var(--fraca)}
-  .local{background:var(--local);border:1.5px solid var(--local-borda)}
-  .nuvem{background:var(--azure-fraco);border:1.5px solid var(--azure-borda)}
-  .aci{background:var(--aci);border:1.5px solid var(--aci-borda);border-radius:10px;
-       padding:11px;margin-top:9px}
+  .palco{display:grid;grid-template-columns:250px 96px 1fr;align-items:start}
 
-  .peca{display:flex;align-items:flex-start;gap:10px;background:#fff;
-        border:1.5px solid var(--linha);border-radius:9px;padding:9px 11px;
-        margin-bottom:7px;box-shadow:0 1px 2px rgba(16,35,59,.05)}
-  .peca:last-child{margin-bottom:0}
-  .peca .txt{min-width:0;flex:1}
-  .peca .t{font-weight:650;font-size:13px;display:flex;align-items:center;gap:6px}
-  .peca .d{color:var(--fraca);font-size:11.5px;margin-top:2px;line-height:1.4}
+  .zona{border-radius:14px;padding:16px 14px}
+  .local{background:var(--local);border:2px solid var(--local-borda)}
+  .nuvem{background:var(--azure-fraco);border:2px solid var(--azure-borda)}
+  .aci{background:var(--aci);border:2px solid var(--aci-borda);border-radius:12px;
+       padding:14px 12px;margin-top:12px}
+  .tit{display:flex;align-items:center;gap:8px;margin-bottom:13px}
+  .tit .nm{font-size:11.5px;font-weight:800;letter-spacing:.09em;
+           text-transform:uppercase;color:var(--fraca)}
+
+  .tiles{display:grid;gap:9px}
+  .t2{grid-template-columns:1fr 1fr}
+  .tile{position:relative;background:#fff;border:2px solid var(--linha);border-radius:11px;
+        padding:13px 10px 11px;display:flex;flex-direction:column;align-items:center;
+        gap:7px;text-align:center;box-shadow:0 1px 3px rgba(16,35,59,.06)}
+  .tile .lb{font-weight:700;font-size:13px;line-height:1.25}
+  .tile code{font-size:10.5px}
+  .tile .n{position:absolute;top:-9px;left:-9px}
 
   .n{display:inline-flex;align-items:center;justify-content:center;flex:none;
-     width:19px;height:19px;border-radius:50%;background:var(--laranja);
-     color:#fff;font-size:11px;font-weight:750}
+     width:24px;height:24px;border-radius:50%;background:var(--laranja);
+     color:#fff;font-size:13px;font-weight:800;box-shadow:0 0 0 3px #fff}
 
-  .chips{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
-  .chip{display:flex;align-items:center;gap:6px;background:#fdf3ec;
-        border:1px solid #f2cfb2;border-radius:7px;padding:5px 7px}
-  .chip b{font-size:10.5px;display:block}
-  .chip span{color:var(--fraca);font-size:10.5px}
+  .via{position:relative;height:330px}
+  .fio{position:absolute;left:8px;width:80px;display:flex;align-items:center}
+  .fio .h{height:3px;background:#8ea2b7;flex:1;border-radius:2px}
+  .fio .p{width:0;height:0;border-top:7px solid transparent;
+          border-bottom:7px solid transparent;border-left:11px solid #8ea2b7}
+  .fio .s{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .fio .lg{position:absolute;left:-4px;width:88px;top:-22px;text-align:center;
+           font-size:10.5px;color:var(--fraca);white-space:nowrap}
 
-  .via{position:relative;height:100%;min-height:300px}
-  .fio{position:absolute;left:6px;width:84px;display:flex;align-items:center}
-  .fio .haste{height:2.5px;background:#93a4b6;flex:1;border-radius:2px}
-  .fio .ponta{width:0;height:0;border-top:6px solid transparent;
-              border-bottom:6px solid transparent;border-left:9px solid #93a4b6}
-  .fio .sel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-            box-shadow:0 0 0 3px #fff}
-  .fio .leg{position:absolute;left:0;width:84px;top:-20px;text-align:center;
-            font-size:10px;color:var(--fraca);white-space:nowrap}
+  .elo{display:flex;align-items:center;justify-content:center;gap:9px;
+       margin:9px 0;font-size:10.5px;color:var(--fraca)}
+  .elo .b{width:3px;height:20px;background:#bacadb;border-radius:2px}
 
-  .desce{display:flex;align-items:center;gap:7px;margin:5px 0 5px 18px;
-         font-size:11px;color:var(--fraca)}
-  .desce .barra{width:2.5px;height:18px;background:#c3d0dd;border-radius:2px}
+  .atores{display:flex;gap:10px;margin-bottom:14px}
+  .ator{flex:1;display:flex;align-items:center;gap:11px;background:#fff;
+        border:2px solid var(--linha);border-radius:11px;padding:10px 14px}
+  .ator .q{font-weight:700;font-size:13.5px}
+  .ator .o{color:var(--fraca);font-size:11.5px;margin-top:1px}
 
-  .atores{display:flex;gap:9px;margin-bottom:13px}
-  .ator{flex:1;display:flex;align-items:center;gap:9px;background:#fff;
-        border:1.5px solid var(--linha);border-radius:9px;padding:8px 11px}
-  .ator .q{font-weight:650;font-size:12.5px}
-  .ator .o{color:var(--fraca);font-size:11.5px}
-
-  .acesso{margin-top:9px;background:#fff;border:1.5px solid var(--azure-borda);
-          border-radius:10px;padding:9px 11px}
-  .porta{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:5px}
-  .porta .de{font-weight:600;min-width:152px}
-  .porta .tr{flex:none;display:flex;align-items:center}
-  .porta .tr i{width:30px;height:2.5px;background:var(--laranja);display:block;border-radius:2px}
-  .porta .tr u{width:0;height:0;border-top:5px solid transparent;
-               border-bottom:5px solid transparent;border-left:8px solid var(--laranja);display:block}
+  .saida{margin-top:12px;background:#fff;border:2px solid var(--azure-borda);
+         border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:22px}
+  .rota{display:flex;align-items:center;gap:9px;font-size:12.5px}
+  .rota .st{flex:none;display:flex;align-items:center}
+  .rota .st i{width:34px;height:3px;background:var(--laranja);display:block;border-radius:2px}
+  .rota .st u{width:0;height:0;border-top:6px solid transparent;
+              border-bottom:6px solid transparent;border-left:10px solid var(--laranja);display:block}
 
   ol{margin:20px 0 0;padding:0;list-style:none;
-     display:grid;grid-template-columns:1fr 1fr;gap:7px 28px}
-  ol li{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.42}
-  ol .n{margin-top:1px}
-  .rodape{margin-top:16px;padding-top:11px;border-top:1px solid var(--linha);
-          color:var(--fraca);font-size:11.5px}
+     display:grid;grid-template-columns:1fr 1fr;gap:8px 30px}
+  ol li{display:flex;gap:9px;align-items:center;font-size:12.5px;line-height:1.35}
+  ol .n{width:21px;height:21px;font-size:11.5px;box-shadow:none}
 </style>
-
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="i-docker" viewBox="0 0 32 32">
     <path fill="#2496ed" d="M29.3 13.6c-.7-.5-2.4-.7-3.7-.4-.2-1.2-.8-2.2-2-3.1l-.7-.5-.5.7c-.6 1-.9 2.4-.8 3.6.1.5.2 1.3.7 2-.5.3-1.5.7-2.8.6H2.4l-.1.5c-.2 1.7.1 3.5.9 5 .9 1.7 2.3 2.9 4 3.5 1.9.7 5.1 1.1 8.5.3 2.4-.6 4.5-1.7 6.3-3.3 1.4-1.3 2.6-2.9 3.4-4.7h.3c1.5 0 2.4-.6 2.9-1.1.3-.3.6-.7.7-1.2l.2-.6z"/>
@@ -153,111 +144,89 @@
     <path fill="#0f6cbd" d="M31 21H10.5A7.5 7.5 0 0 1 9.7 6.1 10 10 0 0 1 28.6 8.4 6.3 6.3 0 0 1 31 21z"/>
   </symbol>
 </defs></svg>
-
 <h1>PetBuddies — arquitetura da solução na Azure</h1>
 <p class="sub">Sprint 3 · Java Advanced · aplicação e banco containerizados em ACR + ACI ·
 grupo de recursos <code>rg-petbuddies-devops</code> · região <code>mexicocentral</code></p>
 
 <div class="atores">
-  <div class="ator"><svg class="ico" width="30" height="30"><use href="#i-user"/></svg>
-    <div><div class="q">Tutor e veterinária</div>
-      <div class="o">consomem a API pelo aplicativo, sobre HTTP</div></div></div>
-  <div class="ator"><svg class="ico" width="30" height="30"><use href="#i-dev"/></svg>
-    <div><div class="q">Desenvolvedor</div>
-      <div class="o">constrói as imagens e provisiona tudo pela Azure CLI</div></div></div>
+  <div class="ator"><svg class="ico" width="38" height="38"><use href="#i-user"/></svg>
+    <div><div class="q">Tutor e veterinária</div><div class="o">usam a API pelo aplicativo</div></div></div>
+  <div class="ator"><svg class="ico" width="38" height="38"><use href="#i-dev"/></svg>
+    <div><div class="q">Desenvolvedor</div><div class="o">constrói as imagens e provisiona pela CLI</div></div></div>
 </div>
 
 <div class="palco">
   <div class="zona local">
-    <div class="cabeca"><svg class="ico" width="20" height="20"><use href="#i-dev"/></svg>
-      <span class="nome">Máquina do desenvolvedor</span></div>
-    <div class="peca"><svg class="ico" width="26" height="26"><use href="#i-folder"/></svg>
-      <div class="txt"><div class="t"><span class="n">1</span>Repositório clonado</div>
-        <div class="d">Dockerfiles, scripts e <code>.env</code></div></div></div>
-    <div class="peca"><svg class="ico" width="26" height="26"><use href="#i-docker"/></svg>
-      <div class="txt"><div class="t"><span class="n">2</span>Docker</div>
-        <div class="d">build em <code>linux/amd64</code></div></div></div>
-    <div class="peca"><svg class="ico" width="26" height="26"><use href="#i-cli"/></svg>
-      <div class="txt"><div class="t"><span class="n">4</span>Azure CLI</div>
-        <div class="d">cria cada recurso da nuvem</div></div></div>
-    <div class="peca"><svg class="ico" width="26" height="26"><use href="#i-github"/></svg>
-      <div class="txt"><div class="t">GitHub</div>
-        <div class="d">origem do código e dos scripts</div></div></div>
+    <div class="tit"><svg class="ico" width="22" height="22"><use href="#i-dev"/></svg>
+      <span class="nm">Máquina local</span></div>
+    <div class="tiles t2">
+      <div class="tile"><span class="n">1</span>
+        <svg class="ico" width="46" height="46"><use href="#i-folder"/></svg>
+        <span class="lb">Repositório</span></div>
+      <div class="tile"><span class="n">2</span>
+        <svg class="ico" width="46" height="46"><use href="#i-docker"/></svg>
+        <span class="lb">Docker</span></div>
+      <div class="tile"><span class="n">4</span>
+        <svg class="ico" width="46" height="46"><use href="#i-cli"/></svg>
+        <span class="lb">Azure CLI</span></div>
+      <div class="tile">
+        <svg class="ico" width="46" height="46"><use href="#i-github"/></svg>
+        <span class="lb">GitHub</span></div>
+    </div>
   </div>
 
   <div class="via">
-    <div class="fio" style="top:54px"><div class="leg">docker push</div>
-      <div class="haste"></div><div class="ponta"></div><span class="sel n">3</span></div>
-    <div class="fio" style="top:146px"><div class="leg">az cli</div>
-      <div class="haste"></div><div class="ponta"></div><span class="sel n">4</span></div>
+    <div class="fio" style="top:66px"><div class="lg">docker push</div>
+      <div class="h"></div><div class="p"></div><span class="s n">3</span></div>
+    <div class="fio" style="top:172px"><div class="lg">az cli</div>
+      <div class="h"></div><div class="p"></div><span class="s n">4</span></div>
   </div>
 
   <div class="zona nuvem">
-    <div class="cabeca"><svg class="ico" width="22" height="22"><use href="#i-azure"/></svg>
-      <span class="nome">Microsoft Azure</span>
-      <svg class="ico" width="32" height="19" style="margin-left:auto;opacity:.4"><use href="#i-nuvem"/></svg></div>
+    <div class="tit"><svg class="ico" width="24" height="24"><use href="#i-azure"/></svg>
+      <span class="nm">Microsoft Azure</span>
+      <svg class="ico" width="36" height="22" style="margin-left:auto;opacity:.35"><use href="#i-nuvem"/></svg></div>
 
-    <div class="peca"><svg class="ico" width="28" height="28"><use href="#i-acr"/></svg>
-      <div class="txt"><div class="t"><span class="n">3</span>Azure Container Registry</div>
-        <div class="d"><code>petbuddiesrm565339</code> — guarda as duas imagens</div></div></div>
-
-    <div class="peca"><svg class="ico" width="28" height="28"><use href="#i-vault"/></svg>
-      <div class="txt"><div class="t">Azure Key Vault</div>
-        <div class="d"><code>kv-petbuddies-rm565339</code> — senhas do banco, segredo JWT
-          e credenciais do registry</div></div></div>
-
-    <div class="aci">
-      <div class="cabeca" style="margin-bottom:9px">
-        <svg class="ico" width="20" height="20"><use href="#i-aci"/></svg>
-        <span class="nome">Azure Container Instances</span></div>
-
-      <div class="peca"><svg class="ico" width="28" height="28"><use href="#i-oracle"/></svg>
-        <div class="txt"><div class="t"><span class="n">5</span>Oracle XE 21c</div>
-          <div class="d">2 vCPU · 4 GB · porta <code>1521</code> pública, para o SELECT de evidência</div>
-          <div class="chips">
-            <div class="chip"><svg class="ico" width="14" height="14"><use href="#i-oracle"/></svg>
-              <div><b>PETBUDDIES_CUIDADO</b><span>16 tabelas · Java</span></div></div>
-            <div class="chip"><svg class="ico" width="14" height="14"><use href="#i-oracle"/></svg>
-              <div><b>PETBUDDIES_BACKOFFICE</b><span>reservado ao back-office</span></div></div>
-          </div></div></div>
-
-      <div class="desce"><div class="barra"></div>
-        <span>JDBC na porta 1521, schema próprio</span></div>
-
-      <div class="peca"><svg class="ico" width="28" height="28"><use href="#i-spring"/></svg>
-        <div class="txt"><div class="t"><span class="n">6</span>API de cuidado</div>
-          <div class="d">Java 21 · Spring Boot 3.4 · 1 vCPU · 2 GB · porta <code>8080</code></div>
-          <div class="d">o Flyway cria as 16 tabelas e a carga na subida</div></div></div>
+    <div class="tiles t2">
+      <div class="tile"><span class="n">3</span>
+        <svg class="ico" width="50" height="50"><use href="#i-acr"/></svg>
+        <span class="lb">Container Registry</span><code>petbuddiesrm565339</code></div>
+      <div class="tile">
+        <svg class="ico" width="50" height="50"><use href="#i-vault"/></svg>
+        <span class="lb">Key Vault</span><code>kv-petbuddies-rm565339</code></div>
     </div>
 
-    <div class="acesso">
-      <div class="cabeca" style="margin-bottom:6px"><span class="n">7</span>
-        <span class="nome">Acesso de fora da nuvem</span></div>
-      <div class="porta"><span class="de">Tutor e veterinária</span>
-        <span class="tr"><i></i><u></u></span><span>API de cuidado</span><code>HTTP 8080</code></div>
-      <div class="porta"><span class="de">Evidência de persistência</span>
-        <span class="tr"><i></i><u></u></span><span>SELECT no Oracle</span><code>TCP 1521</code></div>
+    <div class="aci">
+      <div class="tit" style="margin-bottom:11px">
+        <svg class="ico" width="22" height="22"><use href="#i-aci"/></svg>
+        <span class="nm">Container Instances</span></div>
+      <div class="tiles t2">
+        <div class="tile"><span class="n">5</span>
+          <svg class="ico" width="52" height="52"><use href="#i-oracle"/></svg>
+          <span class="lb">Oracle XE 21c</span><code>1521</code></div>
+        <div class="tile"><span class="n">6</span>
+          <svg class="ico" width="52" height="52"><use href="#i-spring"/></svg>
+          <span class="lb">API de cuidado</span><code>8080</code></div>
+      </div>
+      <div class="elo"><span class="b"></span>JDBC · schema <code>PETBUDDIES_CUIDADO</code><span class="b"></span></div>
+    </div>
+
+    <div class="saida">
+      <span class="n">7</span>
+      <div class="rota"><svg class="ico" width="26" height="26"><use href="#i-user"/></svg>
+        <span class="st"><i></i><u></u></span><span>API</span><code>HTTP 8080</code></div>
+      <div class="rota"><svg class="ico" width="26" height="26"><use href="#i-oracle"/></svg>
+        <span class="st"><i></i><u></u></span><span>SELECT</span><code>TCP 1521</code></div>
     </div>
   </div>
 </div>
 
 <ol>
-  <li><span class="n">1</span><span>O desenvolvedor clona o repositório e preenche o <code>.env</code>;
-      o <code>00_preflight.sh</code> confere sessão, providers e quota antes de criar qualquer recurso.</span></li>
-  <li><span class="n">2</span><span>O <code>docker build --platform linux/amd64</code> gera a imagem
-      do Oracle e a da API — o ACI executa somente amd64.</span></li>
-  <li><span class="n">3</span><span>O <code>docker push</code> envia as duas imagens ao Container
-      Registry, criado por <code>az acr create</code>.</span></li>
-  <li><span class="n">4</span><span>A Azure CLI cria o grupo de recursos, o Key Vault e os dois
-      Container Instances. Nenhum recurso é criado pelo portal.</span></li>
-  <li><span class="n">5</span><span>Cada Container Instance puxa sua imagem do Registry autenticando
-      com a credencial guardada no cofre, que também injeta as senhas do banco.</span></li>
-  <li><span class="n">6</span><span>Na subida da API, o Flyway cria as 16 tabelas e a carga de
-      demonstração no schema <code>PETBUDDIES_CUIDADO</code>.</span></li>
-  <li><span class="n">7</span><span>Tutor e veterinária consomem a API em HTTP na porta 8080; a
-      persistência é evidenciada por SELECT direto no Oracle, na porta 1521.</span></li>
+  <li><span class="n">1</span><span>Clone do repositório e <code>.env</code> preenchido</span></li>
+  <li><span class="n">2</span><span><code>docker build --platform linux/amd64</code></span></li>
+  <li><span class="n">3</span><span><code>docker push</code> das imagens para o registry</span></li>
+  <li><span class="n">4</span><span>Azure CLI cria todos os recursos</span></li>
+  <li><span class="n">5</span><span>Cada container puxa a imagem com a credencial do cofre</span></li>
+  <li><span class="n">6</span><span>Flyway cria as 16 tabelas e a carga na subida</span></li>
+  <li><span class="n">7</span><span>Consumo por HTTP; persistência evidenciada por SELECT</span></li>
 </ol>
-
-<p class="rodape">Nenhum dado sensível existe em código: senhas, segredo JWT e credenciais do registry
-vivem no Key Vault e chegam aos containers como variáveis de ambiente protegidas. As imagens declaram
-usuário próprio — nenhum container roda como root.</p>
