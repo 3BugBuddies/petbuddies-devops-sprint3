@@ -9,9 +9,9 @@
 # gvenzl/oracle-xe só publica amd64. Sem a flag, um Mac ARM gera imagem que
 # sobe no ACI e morre em loop.
 #
-# Java e .NET são construídos com as ferramentas do host (Maven e dotnet) porque
-# o artefato das duas é portável: jar é bytecode, publish do .NET é IL. Emular o
-# estágio de compilação em amd64 custaria dezenas de minutos e nada em troca.
+# O jar é construído com o Maven do host porque bytecode não depende de
+# arquitetura. Emular a JVM do Maven em amd64 custaria dezenas de minutos e nada
+# em troca.
 set -e
 source "$(dirname "$0")/_comum.sh"
 
@@ -26,34 +26,21 @@ clona() {  # clona() <url> <destino>
   fi
 }
 
-# A entrega cobre Java Advanced: as imagens avaliadas são o Oracle e a API de
-# cuidado. A do back-office sai só com COM_BACKOFFICE=1, para a banca.
-echo "[1/3] código-fonte..."
+echo "[1/3] código-fonte da API..."
 clona https://github.com/3BugBuddies/PetBuddies-AI.git petbuddies-ai
-if [ -n "$COM_BACKOFFICE" ]; then
-  clona https://github.com/3BugBuddies/PetBuddies-API.git PetBuddies-API
-fi
 
 echo "[2/3] imagem do Oracle..."
-docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_ORACLE:$TAG" "$ROOT/oracle"
+docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_ORACLE:$TAG" "$ROOT/database"
 
 echo "[3/3] imagem do Java (mvn package no host, depois empacota)..."
 (cd "$BUILD_DIR/petbuddies-ai" && mvn -q package -DskipTests)
-cp "$BUILD_DIR"/petbuddies-ai/target/*.jar "$ROOT/runtime/java/app.jar"
-docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" "$ROOT/runtime/java"
-
-if [ -n "$COM_BACKOFFICE" ]; then
-  echo "[extra] imagem do .NET (fora da entrega de DevOps)..."
-  rm -rf "$ROOT/runtime/net/publish"
-  dotnet publish "$BUILD_DIR/PetBuddies-API/PetBuddies-API/PetBuddies-API.csproj" \
-    -c Release -o "$ROOT/runtime/net/publish" -p:UseAppHost=false -v q --nologo
-  docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_NET:$TAG" "$ROOT/runtime/net"
-fi
+cp "$BUILD_DIR"/petbuddies-ai/target/*.jar "$ROOT/api/app.jar"
+docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" "$ROOT/api"
 
 echo ""
 echo "push..."
 az acr login --name "$ACR_NAME"
-for img in "$IMG_ORACLE" "$IMG_JAVA" ${COM_BACKOFFICE:+"$IMG_NET"}; do
+for img in "$IMG_ORACLE" "$IMG_JAVA"; do
   docker push "$ACR_NAME.azurecr.io/$img:$TAG"
 done
 

@@ -15,7 +15,7 @@
        background:#eef3f8;padding:2px 6px;border-radius:5px;color:#1b3a5c;white-space:nowrap}
   svg.ico{display:block;flex:none}
 
-  .palco{display:grid;grid-template-columns:250px 96px 1fr;align-items:start}
+  .palco{display:grid;grid-template-columns:286px 92px 1fr;align-items:start}
 
   .zona{border-radius:14px;padding:16px 14px}
   .local{background:var(--local);border:2px solid var(--local-borda)}
@@ -32,6 +32,7 @@
         padding:13px 10px 11px;display:flex;flex-direction:column;align-items:center;
         gap:7px;text-align:center;box-shadow:0 1px 3px rgba(16,35,59,.06)}
   .tile .lb{font-weight:700;font-size:13px;line-height:1.25}
+  .tile .ds{color:var(--fraca);font-size:11px;line-height:1.3;margin-top:-2px}
   .tile code{font-size:10.5px}
   .tile .n{position:absolute;top:-9px;left:-9px}
 
@@ -68,8 +69,8 @@
 
   ol{margin:20px 0 0;padding:0;list-style:none;
      display:grid;grid-template-columns:1fr 1fr;gap:8px 30px}
-  ol li{display:flex;gap:9px;align-items:center;font-size:12.5px;line-height:1.35}
-  ol .n{width:21px;height:21px;font-size:11.5px;box-shadow:none}
+  ol li{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.4}
+  ol .n{width:21px;height:21px;font-size:11.5px;box-shadow:none;margin-top:1px}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="i-docker" viewBox="0 0 32 32">
@@ -146,7 +147,7 @@
 </defs></svg>
 <h1>PetBuddies — arquitetura da solução na Azure</h1>
 <p class="sub">Sprint 3 · Java Advanced · aplicação e banco containerizados em ACR + ACI ·
-grupo de recursos <code>rg-petbuddies-devops</code> · região <code>mexicocentral</code></p>
+grupo de recursos <code>rg-petbuddies-devops</code> · região <code>chilecentral</code></p>
 
 <div class="atores">
   <div class="ator"><svg class="ico" width="38" height="38"><use href="#i-user"/></svg>
@@ -162,16 +163,16 @@ grupo de recursos <code>rg-petbuddies-devops</code> · região <code>mexicocentr
     <div class="tiles t2">
       <div class="tile"><span class="n">1</span>
         <svg class="ico" width="46" height="46"><use href="#i-folder"/></svg>
-        <span class="lb">Repositório</span></div>
+        <span class="lb">Repositório</span><span class="ds">Dockerfiles, scripts e <code>.env</code></span></div>
       <div class="tile"><span class="n">2</span>
         <svg class="ico" width="46" height="46"><use href="#i-docker"/></svg>
-        <span class="lb">Docker</span></div>
+        <span class="lb">Docker</span><span class="ds">build em <code>linux/amd64</code></span></div>
       <div class="tile"><span class="n">4</span>
         <svg class="ico" width="46" height="46"><use href="#i-cli"/></svg>
-        <span class="lb">Azure CLI</span></div>
+        <span class="lb">Azure CLI</span><span class="ds">cria todos os recursos</span></div>
       <div class="tile">
         <svg class="ico" width="46" height="46"><use href="#i-github"/></svg>
-        <span class="lb">GitHub</span></div>
+        <span class="lb">GitHub</span><span class="ds">origem do código</span></div>
     </div>
   </div>
 
@@ -190,10 +191,10 @@ grupo de recursos <code>rg-petbuddies-devops</code> · região <code>mexicocentr
     <div class="tiles t2">
       <div class="tile"><span class="n">3</span>
         <svg class="ico" width="50" height="50"><use href="#i-acr"/></svg>
-        <span class="lb">Container Registry</span><code>petbuddiesrm565339</code></div>
+        <span class="lb">Container Registry</span><span class="ds">guarda as duas imagens</span><code>petbuddiesrm565339</code></div>
       <div class="tile">
         <svg class="ico" width="50" height="50"><use href="#i-vault"/></svg>
-        <span class="lb">Key Vault</span><code>kv-petbuddies-rm565339</code></div>
+        <span class="lb">Key Vault</span><span class="ds">senhas do banco, segredo JWT<br>e credenciais do registry</span><code>kv-petbuddies-rm565339</code></div>
     </div>
 
     <div class="aci">
@@ -203,10 +204,10 @@ grupo de recursos <code>rg-petbuddies-devops</code> · região <code>mexicocentr
       <div class="tiles t2">
         <div class="tile"><span class="n">5</span>
           <svg class="ico" width="52" height="52"><use href="#i-oracle"/></svg>
-          <span class="lb">Oracle XE 21c</span><code>1521</code></div>
+          <span class="lb">Oracle XE 21c</span><span class="ds">2 vCPU · 4 GB · 16 tabelas<br>porta pública para o SELECT</span><code>1521</code></div>
         <div class="tile"><span class="n">6</span>
           <svg class="ico" width="52" height="52"><use href="#i-spring"/></svg>
-          <span class="lb">API de cuidado</span><code>8080</code></div>
+          <span class="lb">API de cuidado</span><span class="ds">Java 21 · Spring Boot 3.4<br>1 vCPU · 2 GB</span><code>8080</code></div>
       </div>
       <div class="elo"><span class="b"></span>JDBC · schema <code>PETBUDDIES_CUIDADO</code><span class="b"></span></div>
     </div>
@@ -222,11 +223,11 @@ grupo de recursos <code>rg-petbuddies-devops</code> · região <code>mexicocentr
 </div>
 
 <ol>
-  <li><span class="n">1</span><span>Clone do repositório e <code>.env</code> preenchido</span></li>
-  <li><span class="n">2</span><span><code>docker build --platform linux/amd64</code></span></li>
-  <li><span class="n">3</span><span><code>docker push</code> das imagens para o registry</span></li>
-  <li><span class="n">4</span><span>Azure CLI cria todos os recursos</span></li>
-  <li><span class="n">5</span><span>Cada container puxa a imagem com a credencial do cofre</span></li>
-  <li><span class="n">6</span><span>Flyway cria as 16 tabelas e a carga na subida</span></li>
-  <li><span class="n">7</span><span>Consumo por HTTP; persistência evidenciada por SELECT</span></li>
+  <li><span class="n">1</span><span>Clone do repositório e <code>.env</code> preenchido; o <code>00_preflight.sh</code> confere sessão, providers e quota</span></li>
+  <li><span class="n">2</span><span><code>docker build --platform linux/amd64</code> — o ACI executa somente amd64</span></li>
+  <li><span class="n">3</span><span><code>docker push</code> das duas imagens para o registry criado por <code>az acr create</code></span></li>
+  <li><span class="n">4</span><span>A Azure CLI cria grupo, cofre e containers — nada pelo portal</span></li>
+  <li><span class="n">5</span><span>Cada container puxa a imagem com a credencial do cofre, que também injeta as senhas</span></li>
+  <li><span class="n">6</span><span>Na subida da API, o Flyway cria as 16 tabelas e a carga de demonstração</span></li>
+  <li><span class="n">7</span><span>Consumo por HTTP na 8080; persistência evidenciada por SELECT na 1521</span></li>
 </ol>

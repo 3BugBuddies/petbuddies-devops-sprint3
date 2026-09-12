@@ -4,8 +4,8 @@
 > todos os recursos criados via Azure CLI.
 
 **Escopo desta entrega:** a Sprint 3 cobre **uma** disciplina, e a escolhida é **Java Advanced** — a
-API de cuidado e o banco Oracle, ambos em container. O back-office .NET faz parte do produto mas não
-desta avaliação; o script que o sobe está em `scripts/opcional/`.
+API de cuidado e o banco Oracle, ambos em container. O back-office .NET faz parte do produto, mas não
+desta avaliação, e por isso não está neste repositório.
 
 ## Equipe
 
@@ -50,7 +50,7 @@ O tutor entra pelo aplicativo; a veterinária usa as mesmas rotas com perfil pr�
 | Container Instance | `rm565339-oracle` | Oracle XE 21c · 2 vCPU / 4 GB · porta 1521 |
 | Container Instance | `rm565339-api-java` | Java 21 · Spring Boot 3.4 · 1 vCPU / 2 GB · porta 8080 |
 
-Grupo de recursos `rg-petbuddies-devops`, região `mexicocentral`. A autenticação é JWT, emitido pela
+Grupo de recursos `rg-petbuddies-devops`, região `chilecentral`. A autenticação é JWT, emitido pela
 própria API.
 
 ![Arquitetura da solução na Azure](docs/arquitetura.png)
@@ -70,7 +70,6 @@ no schema do outro.
 ### Pré-requisitos
 
 - Azure CLI (`az`), Docker, Git, JDK 21 + Maven
-- SDK do .NET 8, apenas se for subir o back-office opcional
 - `az login` já executado
 
 ### 1. Clonar e configurar
@@ -109,8 +108,8 @@ habilitado — é com a credencial de admin que os ACIs se autenticam no registr
 Clona a API, constrói as duas imagens em `linux/amd64` e as envia ao ACR:
 
 ```bash
-docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1 oracle/
-docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 runtime/java/
+docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1 database/
+docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 api/
 az acr login --name petbuddiesrm565339
 docker push petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1
 docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
@@ -131,17 +130,10 @@ docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
 
 O schema é criado na subida da aplicação, pelo **Flyway**: 16 tabelas mais o seed de demonstração.
 
-Para subir também o back-office (apresentação do produto, fora desta entrega):
-
-```bash
-COM_BACKOFFICE=1 ./scripts/02_build-push.sh
-./scripts/opcional/aci-dotnet.sh
-```
-
 ### 7. Carga de demonstração
 
 ```bash
-sqlplus PETBUDDIES_CUIDADO/<senha>@petbuddies-oracle-rm565339.mexicocentral.azurecontainer.io:1521/XEPDB1 @carga_demonstracao.sql
+sqlplus PETBUDDIES_CUIDADO/<senha>@petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1 @carga_demonstracao.sql
 ```
 
 Insere dois tutores e três animais com conteúdo de negócio nas duas tabelas do CRUD, para que a
@@ -164,8 +156,8 @@ vínculo do animal com o dono sai de uma subconsulta pelo e-mail.
 
 | Serviço | URL |
 |---|---|
-| API de cuidado (Swagger) | http://petbuddies-java-rm565339.mexicocentral.azurecontainer.io:8080/swagger-ui.html |
-| Oracle | `petbuddies-oracle-rm565339.mexicocentral.azurecontainer.io:1521/XEPDB1` |
+| API de cuidado (Swagger) | http://petbuddies-java-rm565339.chilecentral.azurecontainer.io:8080/swagger-ui.html |
+| Oracle | `petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1` |
 
 Usuários de demonstração: `maria@email.com` (tutor) e `ana@clinica.com` (veterinária), senha
 `petbuddies123`.
@@ -186,7 +178,7 @@ O CRUD demonstrado é **`T_PB_RESPONSAVEL` → `T_PB_ANIMAL`**, um relacionament
 São tabelas do núcleo do produto: sem tutor e sem animal não existe cuidado de pet.
 
 ```bash
-BASE=http://petbuddies-java-rm565339.mexicocentral.azurecontainer.io:8080
+BASE=http://petbuddies-java-rm565339.chilecentral.azurecontainer.io:8080
 
 TOKEN=$(curl -s -X POST $BASE/api/auth/login -H 'Content-Type: application/json' \
   -d '{"login":"maria@email.com","senha":"petbuddies123"}' | jq -r .token)
@@ -211,7 +203,7 @@ curl -X DELETE $BASE/api/animal/1 -H "Authorization: Bearer $TOKEN"
 
 ### Evidência de persistência — SELECT direto no banco
 
-Conecte em `petbuddies-oracle-rm565339.mexicocentral.azurecontainer.io:1521/XEPDB1` com o usuário
+Conecte em `petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1` com o usuário
 `PETBUDDIES_CUIDADO` e execute, após cada operação:
 
 ```sql
@@ -263,11 +255,11 @@ serviço para configurar o outro.
 ├── .env.example                    modelo das variáveis; o .env não vai para o Git
 ├── docker-compose.yml              execução local
 ├── docs/arquitetura.png            desenho da solução na Azure
-├── oracle/
-│   ├── Dockerfile                  Oracle XE 21c com os dois schemas
+├── database/
+│   ├── Dockerfile                  Oracle XE 21c
 │   └── container-entrypoint-initdb.d/
-│       └── 01_segundo_schema.sh    cria o schema do back-office
-├── runtime/java/Dockerfile         empacota o jar sobre a base amd64
+│       └── 01_segundo_schema.sh    schema reservado ao back-office
+├── api/Dockerfile                  empacota o jar sobre a base amd64
 └── scripts/
     ├── 00_preflight.sh             confere o ambiente; não cria nada
     ├── 01_acr.sh                   grupo de recursos + Container Registry
@@ -275,8 +267,7 @@ serviço para configurar o outro.
     ├── 03_key-vault.sh             cofre e segredos
     ├── 04_aci-oracle.sh            container do banco
     ├── 05_aci-java.sh              container da API
-    ├── 99_destroy.sh               remove tudo
-    └── opcional/aci-dotnet.sh      back-office, fora desta entrega
+    └── 99_destroy.sh               remove tudo
 ```
 
 **Sem volume no banco.** O Oracle não suporta seus datafiles sobre SMB, que é o que o Azure Files

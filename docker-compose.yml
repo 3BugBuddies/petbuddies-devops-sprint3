@@ -1,4 +1,4 @@
-# Execução local dos três componentes — o mesmo desenho que vai para a nuvem.
+# Execução local — o mesmo desenho que vai para a nuvem: a API e o banco.
 #
 #   ./scripts/02_build-push.sh   clona as duas APIs em .build/ (pré-requisito)
 #   docker compose up -d --build
@@ -9,7 +9,7 @@
 services:
 
   oracle:
-    build: ./oracle
+    build: ./database
     container_name: petbuddies_oracle
     env_file: [.env]
     environment:
@@ -30,31 +30,11 @@ services:
       start_period: 300s
     networks: [petbuddies-net]
 
-  api-backoffice:
-    build: ../PetBuddies-API/PetBuddies-API
-    container_name: petbuddies_dotnet
-    env_file: [.env]
-    environment:
-      ConnectionStrings__Oracle: "Data Source=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle)(PORT=1521)))(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME=XEPDB1)));User Id=${ORACLE_USER_BACKOFFICE};Password=${ORACLE_PASSWORD_BACKOFFICE};Max Pool Size=3;Min Pool Size=1"
-      PETBUDDIES_JWT_SECRET: ${PETBUDDIES_JWT_SECRET}
-      # O host é o nome do SERVIÇO na rede do compose — nem o nome da rede, nem
-      # a porta publicada. Errar isso deixa a chamada entre os dois silenciosa.
-      MotorApi__BaseUrl: http://api-cuidado:8080
-      ASPNETCORE_ENVIRONMENT: Production
-    depends_on:
-      oracle: { condition: service_healthy }
-    ports: ["5297:8080"]
-    networks: [petbuddies-net]
-
   api-cuidado:
     build: ../petbuddies-ai
     container_name: petbuddies_java
     env_file: [.env]
     environment:
-      # PETNETAPI_URL vence o application-docker.properties: variável de ambiente
-      # tem precedência sobre arquivo de profile no Spring.
-      SPRING_PROFILES_ACTIVE: docker
-      PETNETAPI_URL: http://api-backoffice:8080
       ORACLE_URL: jdbc:oracle:thin:@oracle:1521/XEPDB1
       ORACLE_USER: ${ORACLE_USER_CUIDADO}
       ORACLE_PASSWORD: ${ORACLE_PASSWORD_CUIDADO}

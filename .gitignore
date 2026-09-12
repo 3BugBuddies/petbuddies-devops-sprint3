@@ -1,5 +1,4 @@
 .env
 *.log
 .build/
-runtime/java/app.jar
-runtime/net/publish/
+api/app.jar
