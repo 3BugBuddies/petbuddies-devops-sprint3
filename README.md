@@ -67,7 +67,9 @@ da API. Não há passo manual de schema entre um e outro.
 ## How To — execução completa
 
 > **Validar mudança sem derrubar o ambiente que está no ar:** grupo, registry, cofre e rótulos de DNS
-> são sobrescrevíveis por variável.
+> são sobrescrevíveis por variável de ambiente — nenhuma delas mora no `.env`, então só existem se
+> você as escrever na própria linha de comando. Todo script anuncia o alvo na primeira linha e avisa
+> em destaque quando alguma sobrescrita está ativa.
 >
 > ```bash
 > PETBUDDIES_RG=rg-petbuddies-teste PETBUDDIES_ACR=petbuddiesteste563925 \

@@ -5,6 +5,7 @@
 # sempre <dns-label>.<região>.azurecontainer.io.
 set -e
 source "$(dirname "$0")/_comum.sh"
+mostra_alvo
 source "$(dirname "$0")/_segredo.sh"
 
 az container create \

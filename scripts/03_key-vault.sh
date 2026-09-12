@@ -12,6 +12,7 @@
 #      de 1 a 5 minutos e 15s falha na maioria das vezes.
 set -e
 source "$(dirname "$0")/_comum.sh"
+mostra_alvo
 carrega_env
 
 SUB=$(az account show --query id -o tsv)

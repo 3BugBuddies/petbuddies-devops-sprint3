@@ -15,6 +15,7 @@
 # amd64, que num Mac ARM custa dezenas de minutos.
 set -e
 source "$(dirname "$0")/_comum.sh"
+mostra_alvo
 
 API="$ROOT/petbuddies-ai"
 

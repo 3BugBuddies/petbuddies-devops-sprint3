@@ -41,6 +41,21 @@ if [ ! -d "$ROOT/scripts" ]; then
   echo "Rode com bash, ou exporte PETBUDDIES_ROOT=/caminho/para/petbuddies-devops" >&2
   return 1 2>/dev/null || exit 1
 fi
+# Diz em voz alta para onde a execução está apontando. Sem isto, um
+# PETBUDDIES_* esquecido no shell redireciona tudo em silêncio — e o erro só
+# aparece quando o recurso errado já foi criado ou apagado.
+mostra_alvo() {
+  local sobrescritas=""
+  for v in PETBUDDIES_RG PETBUDDIES_LOCATION PETBUDDIES_ACR PETBUDDIES_KV PETBUDDIES_SUFIXO PETBUDDIES_TAG; do
+    [ -n "${!v}" ] && sobrescritas="$sobrescritas $v"
+  done
+  echo "alvo: grupo $RESOURCE_GROUP · região $LOCATION · registry $ACR_NAME · cofre $KEY_VAULT · tag $TAG"
+  if [ -n "$sobrescritas" ]; then
+    echo "ATENÇÃO: execução redirecionada por variável de ambiente —$sobrescritas" >&2
+    echo "         se isto não era intencional, abra um terminal novo." >&2
+  fi
+}
+
 carrega_env() {
   [ -f "$ROOT/.env" ] || { echo "ERRO: .env não encontrado. cp .env.example .env e preencha."; exit 1; }
   set -a; source "$ROOT/.env"; set +a

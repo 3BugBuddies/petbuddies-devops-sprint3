@@ -2,6 +2,7 @@
 # 01 — Resource group + Azure Container Registry
 set -e
 source "$(dirname "$0")/_comum.sh"
+mostra_alvo
 
 az group show -n "$RESOURCE_GROUP" &>/dev/null \
   || az group create -n "$RESOURCE_GROUP" -l "$LOCATION" -o table
