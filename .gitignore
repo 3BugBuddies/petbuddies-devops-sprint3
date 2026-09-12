@@ -1,0 +1,5 @@
+.env
+*.log
+.build/
+runtime/java/app.jar
+runtime/net/publish/
