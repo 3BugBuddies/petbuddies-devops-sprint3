@@ -4,8 +4,7 @@
 > todos os recursos criados via Azure CLI.
 
 **Escopo desta entrega:** a Sprint 3 cobre **uma** disciplina, e a escolhida é **Java Advanced** — a
-API de cuidado e o banco Oracle, ambos em container. O back-office .NET faz parte do produto, mas não
-desta avaliação, e por isso não está neste repositório.
+API de cuidado e o banco Oracle, ambos em container, provisionados por Azure CLI.
 
 ## Equipe
 
@@ -55,8 +54,8 @@ própria API.
 
 ![Arquitetura da solução na Azure](docs/arquitetura.png)
 
-O **Key Vault** guarda os sete segredos (senhas do Oracle, segredo JWT, chave da IA e credenciais do
-registry). Nenhum deles aparece em script, log ou variável visível: os scripts os leem do cofre no
+O **Key Vault** guarda os seis segredos (usuário e senha do banco, segredo JWT, chave da IA e as
+credenciais do registry). Nenhum deles aparece em script, log ou variável visível: os scripts os leem do cofre no
 momento do `az container create` e os injetam como `--secure-environment-variables`.
 
 **Um schema, criado pela própria aplicação.** O usuário do banco nasce com o container, pelas
@@ -66,6 +65,14 @@ da API. Não há passo manual de schema entre um e outro.
 ---
 
 ## How To — execução completa
+
+> **Validar mudança sem derrubar o ambiente que está no ar:** grupo, registry, cofre e rótulos de DNS
+> são sobrescrevíveis por variável.
+>
+> ```bash
+> PETBUDDIES_RG=rg-petbuddies-teste PETBUDDIES_ACR=petbuddiesteste563925 \
+> PETBUDDIES_KV=kv-petbuddies-teste PETBUDDIES_SUFIXO=-teste ./scripts/01_acr.sh
+> ```
 
 ### Pré-requisitos
 
@@ -127,7 +134,8 @@ habilitado — é com a credencial de admin que os ACIs se autenticam no registr
 Clona a API, constrói as duas imagens em `linux/amd64` e as envia ao ACR:
 
 ```bash
-docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1 database/
+az acr import --name petbuddiesrm565339 --source docker.io/gvenzl/oracle-xe:21-slim \
+              --image rm565339-oracle-petbuddies:v1
 docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 api/
 az acr login --name petbuddiesrm565339
 docker push petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1
@@ -300,7 +308,6 @@ serviço para configurar o outro.
 ├── .env.example                    modelo das variáveis; o .env não vai para o Git
 ├── docker-compose.yml              execução local
 ├── docs/arquitetura.png            desenho da solução na Azure
-├── database/Dockerfile             Oracle XE 21c
 ├── petbuddies-ai/                  código-fonte da API
 │   ├── Dockerfile                  multi-estágio, compila com Maven na imagem
 │   ├── Dockerfile.runtime          empacota o jar já construído (usado pelo 02)

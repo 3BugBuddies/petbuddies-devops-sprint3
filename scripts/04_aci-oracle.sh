@@ -4,6 +4,11 @@
 # O usuário da aplicação nasce pelas variáveis APP_USER/APP_USER_PASSWORD, que a
 # própria imagem do gvenzl consome. As tabelas vêm depois, pelo Flyway.
 #
+# ORACLE_RANDOM_PASSWORD: o SYS ganha uma senha aleatória que ninguém guarda e
+# ninguém usa. A imagem exige uma senha administrativa no primeiro boot, mas a
+# aplicação conecta como APP_USER — manter a do SYS num cofre seria administrar
+# um segredo sem dono.
+#
 # A porta 1521 é pública de propósito: a rubrica §9.3 exige evidência de cada
 # operação do CRUD por SELECT no banco, feito de um cliente SQL externo.
 set -e
@@ -20,9 +25,9 @@ az container create \
   --registry-password "$(segredo acr-password)" \
   --environment-variables \
       ORACLE_CHARACTERSET=AL32UTF8 \
+      ORACLE_RANDOM_PASSWORD=yes \
       APP_USER="$(segredo oracle-user-cuidado)" \
   --secure-environment-variables \
-      ORACLE_PASSWORD="$(segredo oracle-sys-password)" \
       APP_USER_PASSWORD="$(segredo oracle-password-cuidado)" \
   --restart-policy Always -o none
 

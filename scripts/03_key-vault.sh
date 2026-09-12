@@ -48,14 +48,13 @@ guarda() {
 # — a sonda quebrava exatamente quando o ambiente era recriado.
 echo "aguardando propagação do RBAC..."
 for i in $(seq 1 30); do
-  if az keyvault secret set --vault-name "$KEY_VAULT" --name oracle-sys-password \
-       --value "$ORACLE_SYS_PASSWORD" -o none 2>/dev/null; then
+  if az keyvault secret set --vault-name "$KEY_VAULT" --name oracle-user-cuidado \
+       --value "$ORACLE_USER_CUIDADO" -o none 2>/dev/null; then
     echo "  liberado na tentativa $i"; break
   fi
   [ "$i" = 30 ] && { echo "ERRO: RBAC não propagou em 5 min."; exit 1; }
   sleep 10
 done
-guarda oracle-user-cuidado        "$ORACLE_USER_CUIDADO"
 guarda oracle-password-cuidado    "$ORACLE_PASSWORD_CUIDADO"
 guarda jwt-secret                 "$PETBUDDIES_JWT_SECRET"
 guarda gemini-api-key             "$GEMINI_API_KEY"

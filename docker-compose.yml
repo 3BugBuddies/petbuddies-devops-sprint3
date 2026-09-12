@@ -9,11 +9,11 @@
 services:
 
   oracle:
-    build: ./database
+    image: gvenzl/oracle-xe:21-slim
     container_name: petbuddies_oracle
     env_file: [.env]
     environment:
-      ORACLE_PASSWORD: ${ORACLE_SYS_PASSWORD}
+      ORACLE_RANDOM_PASSWORD: "yes"
       ORACLE_CHARACTERSET: AL32UTF8
       APP_USER: ${ORACLE_USER_CUIDADO}
       APP_USER_PASSWORD: ${ORACLE_PASSWORD_CUIDADO}
