@@ -9,36 +9,25 @@
 # gvenzl/oracle-xe só publica amd64. Sem a flag, um Mac ARM gera imagem que
 # sobe no ACI e morre em loop.
 #
-# O jar é construído com o Maven do host porque bytecode não depende de
-# arquitetura. Emular a JVM do Maven em amd64 custaria dezenas de minutos e nada
-# em troca.
+# O jar é construído com o Maven do host e a imagem apenas o empacota
+# (Dockerfile.runtime). Bytecode não depende de arquitetura, então o resultado é
+# idêntico ao do Dockerfile multi-estágio da API — sem emular a JVM do Maven em
+# amd64, que num Mac ARM custa dezenas de minutos.
 set -e
 source "$(dirname "$0")/_comum.sh"
 
-BUILD_DIR="$ROOT/.build"
-mkdir -p "$BUILD_DIR"
+API="$ROOT/petbuddies-ai"
 
-clona() {  # clona() <url> <destino>
-  if [ -d "$BUILD_DIR/$2/.git" ]; then
-    echo "  $2: já clonado, atualizando..."; git -C "$BUILD_DIR/$2" pull --ff-only -q
-  else
-    echo "  $2: clonando..."; git clone -q --depth 1 "$1" "$BUILD_DIR/$2"
-  fi
-}
-
-echo "[1/3] código-fonte da API..."
-clona https://github.com/3BugBuddies/PetBuddies-AI.git petbuddies-ai
-
-echo "[2/3] imagem do Oracle..."
+echo "[1/3] imagem do Oracle..."
 docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_ORACLE:$TAG" "$ROOT/database"
 
-echo "[3/3] imagem do Java (mvn package no host, depois empacota)..."
-(cd "$BUILD_DIR/petbuddies-ai" && mvn -q package -DskipTests)
-cp "$BUILD_DIR"/petbuddies-ai/target/*.jar "$ROOT/api/app.jar"
-docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" "$ROOT/api"
+echo "[2/3] imagem do Java (mvn package no host, depois empacota)..."
+(cd "$API" && mvn -q package -DskipTests)
+cp "$API"/target/*.jar "$API/app.jar"
+docker build --platform linux/amd64 -f "$API/Dockerfile.runtime" -t "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" "$API"
 
 echo ""
-echo "push..."
+echo "[3/3] push..."
 az acr login --name "$ACR_NAME"
 for img in "$IMG_ORACLE" "$IMG_JAVA"; do
   docker push "$ACR_NAME.azurecr.io/$img:$TAG"

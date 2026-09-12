@@ -17,8 +17,6 @@ services:
       ORACLE_CHARACTERSET: AL32UTF8
       APP_USER: ${ORACLE_USER_CUIDADO}
       APP_USER_PASSWORD: ${ORACLE_PASSWORD_CUIDADO}
-      APP_USER_2: ${ORACLE_USER_BACKOFFICE}
-      APP_USER_2_PASSWORD: ${ORACLE_PASSWORD_BACKOFFICE}
     ports: ["1521:1521"]
     volumes:
       - oracle_dados:/opt/oracle/oradata
@@ -31,7 +29,9 @@ services:
     networks: [petbuddies-net]
 
   api-cuidado:
-    build: ../petbuddies-ai
+    build:
+      context: ./petbuddies-ai
+      dockerfile: Dockerfile.runtime
     container_name: petbuddies_java
     env_file: [.env]
     environment:

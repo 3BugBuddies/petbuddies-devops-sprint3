@@ -1,0 +1,17 @@
+target/
+.env
+*.class
+*.jar
+*.war
+logs/
+.idea/
+*.iml
+.DS_Store
+CLAUDE.md
+docs/*
+!docs/postman/
+!docs/postman/*.json
+/postman/
+sql/*
+!sql/
+!sql/seed-protocolos-exemplo.sql

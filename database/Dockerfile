@@ -1,8 +1,8 @@
-# Oracle XE 21c com os dois schemas do PetBuddies.
+# Oracle XE 21c — a imagem do banco desta entrega.
 #
-# O gvenzl cria o primeiro usuário pelas variáveis APP_USER/APP_USER_PASSWORD.
-# O segundo nasce do script em container-entrypoint-initdb.d/, porque um .sql
-# ali roda como SYS no CDB — e o usuário precisa existir no PDB XEPDB1.
+# O Dockerfile fixa a versão e dá ao projeto uma cópia própria no Container
+# Registry, que é de onde o Container Instance puxa. O schema não nasce aqui:
+# quem o cria é o Flyway, na subida da API.
+#
+# A tag :21-slim publica somente amd64, que é a arquitetura do ACI.
 FROM gvenzl/oracle-xe:21-slim
-
-COPY container-entrypoint-initdb.d/ /container-entrypoint-initdb.d/

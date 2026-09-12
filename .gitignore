@@ -1,5 +1,5 @@
 .env
 *.log
 .build/
-api/app.jar
-runtime/
+petbuddies-ai/target/
+petbuddies-ai/app.jar

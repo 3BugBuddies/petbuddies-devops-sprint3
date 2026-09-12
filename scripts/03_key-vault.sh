@@ -27,16 +27,6 @@ az role assignment create \
   --scope "/subscriptions/$SUB/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$KEY_VAULT" \
   -o none 2>/dev/null || echo "  (atribuição já existia)"
 
-echo "aguardando propagação do RBAC..."
-for i in $(seq 1 30); do
-  if az keyvault secret set --vault-name "$KEY_VAULT" --name sonda --value ok -o none 2>/dev/null; then
-    az keyvault secret delete --vault-name "$KEY_VAULT" --name sonda -o none 2>/dev/null || true
-    echo "  liberado na tentativa $i"; break
-  fi
-  [ "$i" = 30 ] && { echo "ERRO: RBAC não propagou em 5 min."; exit 1; }
-  sleep 10
-done
-
 ACR_USER=$(az acr credential show -n "$ACR_NAME" -g "$RESOURCE_GROUP" --query username -o tsv)
 ACR_PASS=$(az acr credential show -n "$ACR_NAME" -g "$RESOURCE_GROUP" --query 'passwords[0].value' -o tsv)
 
@@ -51,11 +41,22 @@ guarda() {
   [ -n "$2" ] || { echo "ERRO: o valor de '$1' veio vazio. A origem falhou — confira 'az account show' e rode 00_preflight.sh." >&2; exit 1; }
   az keyvault secret set --vault-name "$KEY_VAULT" --name "$1" --value "$2" -o none
 }
-guarda oracle-sys-password        "$ORACLE_SYS_PASSWORD"
+
+# A primeira gravação serve de sonda da propagação do RBAC, que leva de 1 a 5
+# minutos. Ela é um segredo de verdade, não um descartável: apagar um segredo o
+# deixa em soft-delete, e recriá-lo com o mesmo nome falha na execução seguinte
+# — a sonda quebrava exatamente quando o ambiente era recriado.
+echo "aguardando propagação do RBAC..."
+for i in $(seq 1 30); do
+  if az keyvault secret set --vault-name "$KEY_VAULT" --name oracle-sys-password \
+       --value "$ORACLE_SYS_PASSWORD" -o none 2>/dev/null; then
+    echo "  liberado na tentativa $i"; break
+  fi
+  [ "$i" = 30 ] && { echo "ERRO: RBAC não propagou em 5 min."; exit 1; }
+  sleep 10
+done
 guarda oracle-user-cuidado        "$ORACLE_USER_CUIDADO"
 guarda oracle-password-cuidado    "$ORACLE_PASSWORD_CUIDADO"
-guarda oracle-user-backoffice     "$ORACLE_USER_BACKOFFICE"
-guarda oracle-password-backoffice "$ORACLE_PASSWORD_BACKOFFICE"
 guarda jwt-secret                 "$PETBUDDIES_JWT_SECRET"
 guarda gemini-api-key             "$GEMINI_API_KEY"
 guarda acr-username               "$ACR_USER"

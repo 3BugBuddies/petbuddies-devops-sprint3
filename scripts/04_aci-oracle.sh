@@ -1,10 +1,8 @@
 #!/bin/bash
-# 04 — ACI do Oracle XE: uma instância, dois schemas isolados
+# 04 — ACI do Oracle XE
 #
-# Um instance e não dois porque a assinatura tem limite de 6 Standard Cores na
-# região (ver 00_preflight): dois Oracle a 2 cores deixariam zero folga para
-# recriar um app. O invariante do ADR s3-25 se mantém — nenhum objeto de um
-# serviço vive no schema do outro.
+# O usuário da aplicação nasce pelas variáveis APP_USER/APP_USER_PASSWORD, que a
+# própria imagem do gvenzl consome. As tabelas vêm depois, pelo Flyway.
 #
 # A porta 1521 é pública de propósito: a rubrica §9.3 exige evidência de cada
 # operação do CRUD por SELECT no banco, feito de um cliente SQL externo.
@@ -23,11 +21,9 @@ az container create \
   --environment-variables \
       ORACLE_CHARACTERSET=AL32UTF8 \
       APP_USER="$(segredo oracle-user-cuidado)" \
-      APP_USER_2="$(segredo oracle-user-backoffice)" \
   --secure-environment-variables \
       ORACLE_PASSWORD="$(segredo oracle-sys-password)" \
       APP_USER_PASSWORD="$(segredo oracle-password-cuidado)" \
-      APP_USER_2_PASSWORD="$(segredo oracle-password-backoffice)" \
   --restart-policy Always -o none
 
 echo "FQDN: $FQDN_ORACLE:1521/XEPDB1"

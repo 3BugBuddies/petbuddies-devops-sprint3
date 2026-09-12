@@ -55,13 +55,13 @@ própria API.
 
 ![Arquitetura da solução na Azure](docs/arquitetura.png)
 
-O **Key Vault** guarda os nove segredos (senhas do Oracle, segredo JWT, chave da IA e credenciais do
+O **Key Vault** guarda os sete segredos (senhas do Oracle, segredo JWT, chave da IA e credenciais do
 registry). Nenhum deles aparece em script, log ou variável visível: os scripts os leem do cofre no
 momento do `az container create` e os injetam como `--secure-environment-variables`.
 
-**Um Oracle, dois schemas.** A assinatura tem limite de 6 Standard Cores na região; duas instâncias
-não deixariam folga para recriar um app. Os schemas são isolados: nenhum objeto de um serviço existe
-no schema do outro.
+**Um schema, criado pela própria aplicação.** O usuário do banco nasce com o container, pelas
+variáveis que a imagem do Oracle consome; as 16 tabelas e a carga vêm depois, pelo Flyway, na subida
+da API. Não há passo manual de schema entre um e outro.
 
 ---
 
@@ -300,11 +300,12 @@ serviço para configurar o outro.
 ├── .env.example                    modelo das variáveis; o .env não vai para o Git
 ├── docker-compose.yml              execução local
 ├── docs/arquitetura.png            desenho da solução na Azure
-├── database/
-│   ├── Dockerfile                  Oracle XE 21c
-│   └── container-entrypoint-initdb.d/
-│       └── 01_segundo_schema.sh    schema reservado ao back-office
-├── api/Dockerfile                  empacota o jar sobre a base amd64
+├── database/Dockerfile             Oracle XE 21c
+├── petbuddies-ai/                  código-fonte da API
+│   ├── Dockerfile                  multi-estágio, compila com Maven na imagem
+│   ├── Dockerfile.runtime          empacota o jar já construído (usado pelo 02)
+│   ├── pom.xml
+│   └── src/
 └── scripts/
     ├── 00_preflight.sh             confere o ambiente; não cria nada
     ├── 01_acr.sh                   grupo de recursos + Container Registry
