@@ -31,8 +31,15 @@
   .nome{font-weight:700;font-size:13px}
   .desc{color:var(--fraca);font-size:11.5px;margin-top:1px}
 
-  .cena{display:grid;grid-template-columns:120px 112px 1fr;column-gap:8px;align-items:center}
-  .disp{display:flex;flex-direction:column;gap:14px;align-items:center}
+  .cena{display:grid;grid-template-columns:150px 106px 1fr;column-gap:8px;align-items:center}
+  .disp{display:flex;flex-direction:column;gap:5px;align-items:center}
+  .pessoa{text-align:center}
+  .pessoa span{display:block;font-size:11.5px;font-weight:700;margin-top:2px}
+  .desceta{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+           border-top:8px solid #93a4b6}
+  .fora{border:2px dashed #9aa8b8;border-radius:9px;background:#f6f8fa;padding:8px 9px;text-align:center}
+  .fora .t{font-weight:700;font-size:11.5px;line-height:1.2;margin-top:3px}
+  .fora .n{color:var(--fraca);font-size:10px;line-height:1.25;margin-top:3px}
   .disp .item{text-align:center}
   .disp .item span{display:block;font-size:11.5px;font-weight:650;margin-top:3px}
 
@@ -196,10 +203,14 @@
 
 <div class="cena">
   <div class="disp">
-    <div class="item"><svg class="ico" width="52" height="52"><use href="#i-laptop"/></svg>
-      <span>Navegador</span></div>
-    <div class="item"><svg class="ico" width="38" height="38"><use href="#i-mobile"/></svg>
-      <span>Mobile</span></div>
+    <div class="pessoa"><svg class="ico" width="40" height="40" style="margin:0 auto"><use href="#i-user"/></svg>
+      <span>Tutor e veterinária</span></div>
+    <div class="desceta"></div>
+    <div class="fora">
+      <svg class="ico" width="30" height="30" style="margin:0 auto"><use href="#i-mobile"/></svg>
+      <div class="t">App mobile<br>React Native</div>
+      <div class="n">não containerizado<br>fora desta entrega</div>
+    </div>
   </div>
 
   <div class="fio">
