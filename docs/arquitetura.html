@@ -1,9 +1,9 @@
 <title>PetBuddies · Arquitetura Azure</title>
 <style>
   :root{ --tinta:#10233b; --fraca:#5b6e85; --azul:#0f6cbd; --azul-esc:#0a4d8c;
-         --borda:#b8d4ec; --claro:#eef6fd; --verde:#1e9e5a; --roxo:#6b4fa8; }
+         --borda:#b8d4ec; --claro:#f2f8fd; --verde:#1e9e5a; --roxo:#6b4fa8; }
   *{box-sizing:border-box}
-  body{background:#fff;color:var(--tinta);width:1248px;margin:0 auto;padding:20px 20px 24px;
+  body{background:#fff;color:var(--tinta);width:1248px;margin:0 auto;padding:20px;
        font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   svg.ico{display:block;flex:none}
   code{font:11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef3f8;
@@ -15,23 +15,7 @@
   .marca{display:flex;align-items:center;gap:8px;background:var(--azul);color:#fff;
          padding:7px 14px;border-radius:22px;font-weight:700;font-size:13px}
 
-  /* painel no padrão do professor: barra de título sólida + corpo branco */
-  .painel{border:1.5px solid var(--borda);border-radius:9px;overflow:hidden;background:#fff}
-  .painel > .barra{background:var(--azul);color:#fff;font-weight:700;font-size:12px;
-                   padding:6px 11px;display:flex;align-items:center;gap:7px}
-  .painel > .corpo{padding:10px}
-  .roxa > .barra{background:var(--roxo)}
-  .verde > .barra{background:var(--verde)}
-
-  .tracejado{border:2px dashed var(--azul);border-radius:11px;padding:11px;background:var(--claro)}
-  .tracejado > .rot{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;
-                    color:var(--azul-esc);margin-bottom:9px}
-
-  .check{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--tinta);margin-top:4px}
-  .nome{font-weight:700;font-size:13px}
-  .desc{color:var(--fraca);font-size:11.5px;margin-top:1px}
-
-  .cena{display:grid;grid-template-columns:150px 106px 1fr;column-gap:8px;align-items:center}
+  .cena{display:grid;grid-template-columns:146px 96px 1fr;column-gap:6px;align-items:center}
   .disp{display:flex;flex-direction:column;gap:5px;align-items:center}
   .pessoa{text-align:center}
   .pessoa span{display:block;font-size:11.5px;font-weight:700;margin-top:2px}
@@ -40,8 +24,6 @@
   .fora{border:2px dashed #9aa8b8;border-radius:9px;background:#f6f8fa;padding:8px 9px;text-align:center}
   .fora .t{font-weight:700;font-size:11.5px;line-height:1.2;margin-top:3px}
   .fora .n{color:var(--fraca);font-size:10px;line-height:1.25;margin-top:3px}
-  .disp .item{text-align:center}
-  .disp .item span{display:block;font-size:11.5px;font-weight:650;margin-top:3px}
 
   .fio{display:flex;flex-direction:column;align-items:center;gap:4px}
   .fio .tubo{display:flex;align-items:center;width:100%}
@@ -50,19 +32,65 @@
                border-left:9px solid var(--azul);display:block}
   .fio .et{font-size:10.5px;color:var(--fraca);text-align:center;line-height:1.25}
 
-  .duplo{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-  .base{display:grid;grid-template-columns:250px 92px 1fr 1fr;gap:9px;margin-top:12px;align-items:stretch}
-  .ferramentas{display:flex;gap:14px;justify-content:space-around;align-items:flex-start}
+  .rg{border:2px solid var(--azul);border-radius:11px;padding:12px;background:var(--claro)}
+  .rg > .rot{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;
+             color:var(--azul-esc);margin-bottom:10px}
+
+  .miolo{display:grid;grid-template-columns:300px 74px 1fr;align-items:center}
+
+  /* caixa do ACR, no formato do material: imagens empilhadas dentro do registry */
+  .acr{border:1.5px solid var(--borda);border-radius:9px;background:#fff;padding:11px}
+  .acr .cab{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .acr .cab b{font-size:12.5px;line-height:1.2}
+  .acr .cab span{display:block;font-weight:400;color:var(--fraca);font-size:10.5px}
+  .img{display:flex;align-items:center;gap:8px;border:1px solid #dce6f0;border-radius:7px;
+       padding:5px 8px;margin-bottom:6px;background:#fbfdff}
+  .img .n{font-weight:650;font-size:11.5px}
+  .apoio{display:flex;align-items:center;gap:8px;border-top:1px dashed var(--borda);
+         margin-top:9px;padding-top:9px}
+  .apoio .n{font-weight:650;font-size:12px}
+  .apoio .d{color:var(--fraca);font-size:10.5px}
+
+  /* linhas pontilhadas do registry para cada instancia */
+  .pont{position:relative;height:100%;min-height:170px}
+  .pont .l{position:absolute;left:0;width:74px;display:flex;align-items:center}
+  .pont .l i{flex:1;border-top:2px dashed #7fa9cc;display:block}
+  .pont .l u{width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;
+             border-left:8px solid #7fa9cc;display:block}
+  .pont .l .t{position:absolute;left:0;width:74px;top:-15px;text-align:center;
+              font-size:9.5px;color:var(--fraca)}
+
+  .aci{border:1.5px solid var(--borda);border-radius:9px;background:#fff;padding:10px;
+       display:flex;gap:10px;align-items:flex-start}
+  .aci + .aci{margin-top:11px}
+  .aci .tit{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+            color:var(--fraca)}
+  .aci .n{font-weight:700;font-size:13.5px;margin-top:1px}
+  .check{display:flex;align-items:center;gap:5px;font-size:11px;margin-top:3px}
+  .ext{display:flex;align-items:center;gap:6px;margin-left:auto;align-self:center;
+       font-size:10.5px;color:var(--verde);font-weight:650;white-space:nowrap;text-align:center}
+  .ext i{width:22px;height:2.5px;background:var(--verde);display:block;border-radius:2px}
+  .ext u{width:0;height:0;border-top:5px solid transparent;border-bottom:5px solid transparent;
+         border-left:8px solid var(--verde);display:block}
+  .jdbc{display:flex;align-items:center;justify-content:center;gap:7px;font-size:10.5px;
+        color:var(--fraca);margin:7px 0}
+  .jdbc i{width:2.5px;height:14px;background:#bacadb;border-radius:2px}
+
+  .painel{border:1.5px solid var(--borda);border-radius:9px;overflow:hidden;background:#fff}
+  .painel > .barra{background:var(--azul);color:#fff;font-weight:700;font-size:12px;
+                   padding:6px 11px;display:flex;align-items:center;gap:7px}
+  .painel > .corpo{padding:10px}
+  .base{display:grid;grid-template-columns:250px 88px 1fr 1fr;gap:9px;margin-top:12px}
+  .ferramentas{display:flex;gap:12px;justify-content:space-around}
   .ferramentas .f{text-align:center;font-size:11px;font-weight:600;width:66px}
   .ferramentas .f svg{margin:0 auto 3px}
-
   .benef{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .benef .b{text-align:center;font-size:10.5px;font-weight:600;line-height:1.25}
   .benef .b svg{margin:0 auto 4px}
 
-  .trilha{display:flex;gap:6px;margin-top:14px}
+  .trilha{display:flex;gap:6px;margin-top:13px}
   .passo{flex:1;display:flex;align-items:center;gap:9px;color:#fff;font-weight:700;font-size:12.5px;
-         padding:9px 14px 9px 18px;position:relative;
+         padding:9px 14px 9px 18px;
          clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%,15px 50%)}
   .passo:first-child{clip-path:polygon(0 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,0 100%);
                      padding-left:14px}
@@ -193,6 +221,23 @@
     <path d="M12 11.5L9 14.5l3 3M20 11.5l3 3-3 3M17 10.6l-2 7.8" stroke="#0f6cbd" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M2.5 24.5h27l-1.5 2a1.3 1.3 0 0 1-1 .5H5a1.3 1.3 0 0 1-1-.5z" fill="#2b8ad4"/>
   </symbol>
+</defs></svg><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-cubo" viewBox="0 0 32 32">
+    <path fill="#2b8ad4" d="M16 2.6l12 6.1v14.6L16 29.4 4 23.3V8.7z"/>
+    <path fill="#1a6fb5" d="M16 2.6v26.8L4 23.3V8.7z"/>
+    <path fill="#5aa4de" d="M16 2.6l12 6.1-12 6.1-12-6.1z"/>
+    <path fill="#fff" opacity=".9" d="M16 11.2l5.4 2.7v5.9L16 22.5l-5.4-2.7v-5.9z"/>
+  </symbol>
+  <symbol id="i-imagem" viewBox="0 0 36 26">
+    <rect x="1.5" y="3" width="33" height="5.4" rx="1.4" fill="#2b8ad4"/>
+    <rect x="1.5" y="10.3" width="33" height="5.4" rx="1.4" fill="#5aa4de"/>
+    <rect x="1.5" y="17.6" width="33" height="5.4" rx="1.4" fill="#9cc6e8"/>
+    <g fill="#fff" opacity=".85">
+      <rect x="4.5" y="5.1" width="2" height="1.2" rx=".6"/><rect x="8" y="5.1" width="2" height="1.2" rx=".6"/>
+      <rect x="4.5" y="12.4" width="2" height="1.2" rx=".6"/><rect x="8" y="12.4" width="2" height="1.2" rx=".6"/>
+      <rect x="4.5" y="19.7" width="2" height="1.2" rx=".6"/><rect x="8" y="19.7" width="2" height="1.2" rx=".6"/>
+    </g>
+  </symbol>
 </defs></svg>
 
 <div class="topo">
@@ -214,53 +259,63 @@
   </div>
 
   <div class="fio">
-    <svg class="ico" width="56" height="36"><use href="#i-internet"/></svg>
+    <svg class="ico" width="50" height="32"><use href="#i-internet"/></svg>
     <div class="et"><b>Internet</b></div>
-    <svg class="ico" width="24" height="24"><use href="#i-lock"/></svg>
-    <div class="et">HTTP<br>porta 8080</div>
+    <svg class="ico" width="22" height="22"><use href="#i-lock"/></svg>
+    <div class="et">HTTP 8080</div>
     <div class="tubo"><i></i><u></u></div>
   </div>
 
-  <div class="tracejado">
+  <div class="rg">
     <div class="rot"><svg class="ico" width="19" height="19"><use href="#i-acr"/></svg>
       Resource Group <code>rg-petbuddies-devops</code> &nbsp;·&nbsp; região <code>chilecentral</code></div>
 
-    <div class="duplo">
-      <div class="painel"><div class="barra">
-        <svg class="ico" width="15" height="15"><use href="#i-acr"/></svg>Container Registry</div>
-        <div class="corpo">
-          <div class="nome">petbuddiesrm565339</div>
-          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>SKU Basic</div>
-          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>guarda as duas imagens</div>
-        </div></div>
+    <div class="miolo">
+      <div class="acr">
+        <div class="cab"><svg class="ico" width="30" height="30"><use href="#i-acr"/></svg>
+          <div><b>Azure Container Registry</b><span>petbuddiesrm565339 · SKU Basic</span></div></div>
 
-      <div class="painel roxa"><div class="barra">
-        <svg class="ico" width="15" height="15"><use href="#i-vault"/></svg>Key Vault</div>
-        <div class="corpo">
-          <div class="nome">kv-petbuddies-rm565339</div>
-          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>sete segredos</div>
-          <div class="check"><svg class="ico" width="14" height="14"><use href="#i-check"/></svg>nada de senha em código</div>
-        </div></div>
-    </div>
+        <div class="img"><svg class="ico" width="26" height="19"><use href="#i-imagem"/></svg>
+          <div class="n">rm565339-oracle-petbuddies:v1</div></div>
+        <div class="img"><svg class="ico" width="26" height="19"><use href="#i-imagem"/></svg>
+          <div class="n">rm565339-api-java:v1</div></div>
 
-    <div class="painel verde" style="margin-top:9px"><div class="barra">
-      <svg class="ico" width="15" height="15"><use href="#i-aci"/></svg>Azure Container Instances</div>
-      <div class="corpo duplo">
-        <div class="painel"><div class="corpo" style="display:flex;gap:10px">
-          <svg class="ico" width="42" height="42"><use href="#i-oracle"/></svg>
-          <div><div class="nome">Oracle XE 21c</div>
-            <div class="desc">porta <code>1521</code> pública</div>
+        <div class="apoio"><svg class="ico" width="26" height="26"><use href="#i-vault"/></svg>
+          <div><div class="n">Key Vault</div>
+            <div class="d">kv-petbuddies-rm565339 · sete segredos</div></div></div>
+      </div>
+
+      <div class="pont">
+        <div class="l" style="top:44px"><div class="t">pull</div><i></i><u></u></div>
+        <div class="l" style="top:150px"><div class="t">pull</div><i></i><u></u></div>
+      </div>
+
+      <div>
+        <div class="aci">
+          <svg class="ico" width="34" height="34"><use href="#i-cubo"/></svg>
+          <div>
+            <div class="tit">Azure Container Instance</div>
+            <div class="n">Oracle XE 21c</div>
             <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>2 vCPU · 4 GB</div>
             <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>16 tabelas pelo Flyway</div>
-          </div></div></div>
-        <div class="painel"><div class="corpo" style="display:flex;gap:10px">
-          <svg class="ico" width="42" height="42"><use href="#i-spring"/></svg>
-          <div><div class="nome">API de cuidado</div>
-            <div class="desc">porta <code>8080</code></div>
+          </div>
+          <div class="ext"><i></i><u></u><span>acesso externo<br>porta 1521</span></div>
+        </div>
+
+        <div class="jdbc"><i></i>JDBC · schema <code>PETBUDDIES_CUIDADO</code><i></i></div>
+
+        <div class="aci">
+          <svg class="ico" width="34" height="34"><use href="#i-cubo"/></svg>
+          <div>
+            <div class="tit">Azure Container Instance</div>
+            <div class="n">API de cuidado</div>
             <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>Java 21 · Spring Boot 3.4</div>
             <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>1 vCPU · 2 GB</div>
-          </div></div></div>
-      </div></div>
+          </div>
+          <div class="ext"><i></i><u></u><span>acesso externo<br>porta 8080</span></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -274,7 +329,7 @@
     </div></div>
 
   <div class="fio" style="justify-content:center">
-    <svg class="ico" width="46" height="30"><use href="#i-nuvem"/></svg>
+    <svg class="ico" width="42" height="28"><use href="#i-nuvem"/></svg>
     <div class="et"><b>Deploy</b></div>
     <div class="tubo"><i></i><u></u></div>
   </div>
