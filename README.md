@@ -3,6 +3,10 @@
 > Solução containerizada completa na Azure: **ACR + ACI**, aplicação e banco em containers,
 > todos os recursos criados via Azure CLI.
 
+**Escopo desta entrega:** a Sprint 3 cobre **uma** disciplina, e a escolhida é **Java Advanced** — a
+API de cuidado e o banco Oracle, ambos em container. O back-office .NET faz parte do produto mas não
+desta avaliação; o script que o sobe está em `scripts/opcional/`.
+
 ## Equipe
 
 | Nome | RM |
@@ -20,15 +24,8 @@
 acompanha o plano de cuidado preventivo e recebe prescrições; a clínica registra consultas,
 procedimentos e atendimentos, e configura o catálogo de protocolos que ela oferece.
 
-A solução roda em dois serviços e um banco:
-
-| Componente | Papel | Stack |
-|---|---|---|
-| **API de cuidado** | API única do produto: tutores, animais, consultas, planos de cuidado, autenticação | Java 21 · Spring Boot 3.4 |
-| **Back-office** | Administração da clínica: protocolos, regras, ofertas e pontuação | .NET 8 · ASP.NET Core · EF Core |
-| **Banco** | Dois schemas isolados, um por serviço | Oracle XE 21c |
-
-A autenticação é JWT: a API de cuidado emite o token, o back-office o valida com o mesmo segredo.
+O tutor entra pelo aplicativo; a veterinária usa as mesmas rotas com perfil próprio. A autenticação
+é JWT, emitida pela própria API, e o histórico fica num Oracle na nuvem.
 
 ## Benefícios para o negócio
 
@@ -46,28 +43,17 @@ A autenticação é JWT: a API de cuidado emite o token, o back-office o valida 
 
 ## Arquitetura
 
-```
-                  ┌──────────────────────────── Azure ────────────────────────────┐
-  Tutor / Vet     │                                                               │
-       │          │   ┌─────────────┐        ┌──────────────────────────────┐     │
-       │  HTTPS   │   │     ACR     │ imagem │  ACI · API de cuidado (Java) │     │
-       └──────────┼──▶│  petbuddies │───────▶│        porta 8080            │     │
-                  │   │   rm565339  │        └──────────────┬───────────────┘     │
-                  │   └─────────────┘                       │ JDBC                │
-  Desenvolvedor   │          │ imagem                       ▼                     │
-       │  az cli  │          │              ┌──────────────────────────────┐      │
-       └──────────┼──────────┤              │   ACI · Oracle XE  :1521     │      │
-                  │          │              │  PETBUDDIES_CUIDADO (16 tb)  │      │
-                  │          │              │  PETBUDDIES_BACKOFFICE (4tb) │      │
-                  │          │              └──────────────▲───────────────┘      │
-                  │          │ imagem                      │ Oracle.EF            │
-                  │          ▼              ┌──────────────┴───────────────┐      │
-                  │   ┌─────────────┐  HTTP │ ACI · Back-office (.NET)     │      │
-                  │   │  Key Vault  │◀──────┤        porta 8080            │      │
-                  │   │  9 segredos │ creds └──────────────────────────────┘      │
-                  │   └─────────────┘                                             │
-                  └───────────────────────────────────────────────────────────────┘
-```
+| Recurso Azure | Nome | Conteúdo |
+|---|---|---|
+| Container Registry | `petbuddiesrm565339` | imagens do Oracle e da API |
+| Key Vault | `kv-petbuddies-rm565339` | senhas do banco, segredo JWT e credenciais do registry |
+| Container Instance | `rm565339-oracle` | Oracle XE 21c · 2 vCPU / 4 GB · porta 1521 |
+| Container Instance | `rm565339-api-java` | Java 21 · Spring Boot 3.4 · 1 vCPU / 2 GB · porta 8080 |
+
+Grupo de recursos `rg-petbuddies-devops`, região `mexicocentral`. A autenticação é JWT, emitido pela
+própria API.
+
+![Arquitetura da solução na Azure](docs/arquitetura.png)
 
 O **Key Vault** guarda os nove segredos (senhas do Oracle, segredo JWT, chave da IA e credenciais do
 registry). Nenhum deles aparece em script, log ou variável visível: os scripts os leem do cofre no
@@ -83,7 +69,8 @@ no schema do outro.
 
 ### Pré-requisitos
 
-- Azure CLI (`az`), Docker, Git, JDK 21 + Maven, SDK do .NET 8
+- Azure CLI (`az`), Docker, Git, JDK 21 + Maven
+- SDK do .NET 8, apenas se for subir o back-office opcional
 - `az login` já executado
 
 ### 1. Clonar e configurar
@@ -113,22 +100,20 @@ de Key Vault. **Nenhum recurso é criado aqui.**
 Cria o grupo de recursos `rg-petbuddies-devops` e o ACR `petbuddiesrm565339` (SKU Basic, admin
 habilitado — é com a credencial de admin que os ACIs se autenticam no registry).
 
-### 4. Construir e publicar as três imagens
+### 4. Construir e publicar as imagens
 
 ```bash
 ./scripts/02_build-push.sh
 ```
 
-Clona as duas APIs, constrói as três imagens em `linux/amd64` e as envia ao ACR:
+Clona a API, constrói as duas imagens em `linux/amd64` e as envia ao ACR:
 
 ```bash
 docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1 oracle/
 docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 runtime/java/
-docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-net:v1 runtime/net/
 az acr login --name petbuddiesrm565339
 docker push petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1
 docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
-docker push petbuddiesrm565339.azurecr.io/rm565339-api-net:v1
 ```
 
 ### 5. Cofre de segredos
@@ -141,12 +126,17 @@ docker push petbuddiesrm565339.azurecr.io/rm565339-api-net:v1
 
 ```bash
 ./scripts/04_aci-oracle.sh     # espera o banco abrir antes de retornar
-./scripts/05_aci-dotnet.sh
-./scripts/06_aci-java.sh
+./scripts/05_aci-java.sh
 ```
 
-O schema de cada serviço é criado na subida da própria aplicação: **Flyway** no Java (16 tabelas mais
-o seed de demonstração), **migrations do EF Core** no .NET (4 tabelas).
+O schema é criado na subida da aplicação, pelo **Flyway**: 16 tabelas mais o seed de demonstração.
+
+Para subir também o back-office (apresentação do produto, fora desta entrega):
+
+```bash
+COM_BACKOFFICE=1 ./scripts/02_build-push.sh
+./scripts/opcional/aci-dotnet.sh
+```
 
 ### 7. Encerrar
 
@@ -161,23 +151,25 @@ o seed de demonstração), **migrations do EF Core** no .NET (4 tabelas).
 | Serviço | URL |
 |---|---|
 | API de cuidado (Swagger) | http://petbuddies-java-rm565339.mexicocentral.azurecontainer.io:8080/swagger-ui.html |
-| Back-office (API) | http://petbuddies-net-rm565339.mexicocentral.azurecontainer.io:8080/api/protocolo |
-| Health do back-office | http://petbuddies-net-rm565339.mexicocentral.azurecontainer.io:8080/health/live |
 | Oracle | `petbuddies-oracle-rm565339.mexicocentral.azurecontainer.io:1521/XEPDB1` |
 
 Usuários de demonstração: `maria@email.com` (tutor) e `ana@clinica.com` (veterinária), senha
 `petbuddies123`.
 
-O Swagger do back-office só é publicado em ambiente de desenvolvimento (`Program.cs:261`), e o
-container sobe como `Production` — as rotas dele são consultadas direto:
-`/api/protocolo`, `/api/regra-protocolo`, `/api/oferta` e `/api/regra-pontuacao`.
+
 
 ---
 
 ## CRUD sobre duas tabelas relacionadas
 
-O CRUD demonstrado é **`T_PB_RESPONSAVEL` → `T_PB_ANIMAL`**: o tutor e seus animais, ligados por
-`ID_RESPONSAVEL`. São tabelas do núcleo do produto — sem elas não existe cuidado de pet.
+O CRUD demonstrado é **`T_PB_RESPONSAVEL` → `T_PB_ANIMAL`**, um relacionamento **1:N**:
+
+| Tabela | Lado | Chave |
+|---|---|---|
+| `T_PB_RESPONSAVEL` | **1** — o tutor | PK `ID_RESPONSAVEL` |
+| `T_PB_ANIMAL` | **N** — os animais dele | FK `ID_RESPONSAVEL` → `T_PB_RESPONSAVEL` |
+
+São tabelas do núcleo do produto: sem tutor e sem animal não existe cuidado de pet.
 
 ```bash
 BASE=http://petbuddies-java-rm565339.mexicocentral.azurecontainer.io:8080
@@ -225,7 +217,7 @@ O DDL completo das tabelas está em [`script_bd.sql`](script_bd.sql).
 - **Nenhum dado sensível no código-fonte.** Senhas, segredo JWT e chave de IA vivem no `.env`
   (ignorado pelo Git) e no **Key Vault**. Os scripts os leem do cofre e os passam ao ACI por
   `--secure-environment-variables`, que não são devolvidas por `az container show`.
-- **Containers sem privilégio administrativo.** As três imagens criam um usuário próprio e declaram
+- **Containers sem privilégio administrativo.** As imagens criam um usuário próprio e declaram
   `USER` antes do entrypoint — nenhuma roda como root.
 - `*.log` e `.env` estão no `.gitignore`.
 
@@ -239,15 +231,40 @@ restrição do Azure for Students). O build é local com `docker build` + `docke
 **`--platform linux/amd64` é obrigatório.** O ACI executa apenas amd64 e a imagem `gvenzl/oracle-xe`
 só publica amd64. Em um Mac ARM, sem a flag, a imagem sobe no ACI e morre em laço.
 
-**Java e .NET são compilados no host, não dentro da imagem.** O artefato dos dois é portável — jar é
-bytecode, o publish do .NET é IL — então compilar nativo e empacotar sobre uma base amd64 dá a mesma
-imagem sem emular o compilador. As três imagens saem em menos de dois minutos.
+**A aplicação é compilada no host, não dentro da imagem.** O jar é bytecode e não depende de
+arquitetura, então compilar nativo em ARM e empacotar sobre uma base amd64 dá a mesma imagem sem
+emular a JVM do Maven, que é o estágio caro. As imagens saem em menos de dois minutos.
 
 **Os FQDNs são previsíveis.** O ACI monta sempre `<dns-label>.<região>.azurecontainer.io`, então os
-três endereços são conhecidos antes de criar qualquer container. É o que resolve a dependência
-circular entre os dois serviços, que apontam um para o outro.
+endereços são conhecidos antes de criar qualquer container — o que dispensa capturar o FQDN de um
+serviço para configurar o outro.
+
+## Estrutura do repositório
+
+```
+.
+├── README.md                       este documento — o roteiro de deploy
+├── script_bd.sql                   DDL das 16 tabelas
+├── .env.example                    modelo das variáveis; o .env não vai para o Git
+├── docker-compose.yml              execução local
+├── docs/arquitetura.png            desenho da solução na Azure
+├── oracle/
+│   ├── Dockerfile                  Oracle XE 21c com os dois schemas
+│   └── container-entrypoint-initdb.d/
+│       └── 01_segundo_schema.sh    cria o schema do back-office
+├── runtime/java/Dockerfile         empacota o jar sobre a base amd64
+└── scripts/
+    ├── 00_preflight.sh             confere o ambiente; não cria nada
+    ├── 01_acr.sh                   grupo de recursos + Container Registry
+    ├── 02_build-push.sh            build das imagens + push
+    ├── 03_key-vault.sh             cofre e segredos
+    ├── 04_aci-oracle.sh            container do banco
+    ├── 05_aci-java.sh              container da API
+    ├── 99_destroy.sh               remove tudo
+    └── opcional/aci-dotnet.sh      back-office, fora desta entrega
+```
 
 **Sem volume no banco.** O Oracle não suporta seus datafiles sobre SMB, que é o que o Azure Files
 oferece ao ACI, e o primeiro boot sobre ele fica 2 a 3× mais lento. Como o schema de cada serviço
-nasce na subida da própria aplicação — Flyway no Java, migrations do EF no .NET — um restart do
-container reconstrói o banco em vez de perdê-lo. A entrega desta Sprint não exige volume nomeado.
+nasce na subida da própria aplicação, pelo Flyway, um restart do container reconstrói o banco em vez
+de perdê-lo. A entrega desta Sprint não exige volume nomeado.

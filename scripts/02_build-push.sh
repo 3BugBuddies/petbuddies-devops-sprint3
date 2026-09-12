@@ -26,28 +26,34 @@ clona() {  # clona() <url> <destino>
   fi
 }
 
-echo "[1/4] código-fonte das duas APIs..."
+# A entrega cobre Java Advanced: as imagens avaliadas são o Oracle e a API de
+# cuidado. A do back-office sai só com COM_BACKOFFICE=1, para a banca.
+echo "[1/3] código-fonte..."
 clona https://github.com/3BugBuddies/PetBuddies-AI.git petbuddies-ai
-clona https://github.com/3BugBuddies/PetBuddies-API.git PetBuddies-API
+if [ -n "$COM_BACKOFFICE" ]; then
+  clona https://github.com/3BugBuddies/PetBuddies-API.git PetBuddies-API
+fi
 
-echo "[2/4] imagem do Oracle..."
+echo "[2/3] imagem do Oracle..."
 docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_ORACLE:$TAG" "$ROOT/oracle"
 
-echo "[3/4] imagem do Java (mvn package no host, depois empacota)..."
+echo "[3/3] imagem do Java (mvn package no host, depois empacota)..."
 (cd "$BUILD_DIR/petbuddies-ai" && mvn -q package -DskipTests)
 cp "$BUILD_DIR"/petbuddies-ai/target/*.jar "$ROOT/runtime/java/app.jar"
 docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" "$ROOT/runtime/java"
 
-echo "[4/4] imagem do .NET (dotnet publish no host, depois empacota)..."
-rm -rf "$ROOT/runtime/net/publish"
-dotnet publish "$BUILD_DIR/PetBuddies-API/PetBuddies-API/PetBuddies-API.csproj" \
-  -c Release -o "$ROOT/runtime/net/publish" -p:UseAppHost=false -v q --nologo
-docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_NET:$TAG" "$ROOT/runtime/net"
+if [ -n "$COM_BACKOFFICE" ]; then
+  echo "[extra] imagem do .NET (fora da entrega de DevOps)..."
+  rm -rf "$ROOT/runtime/net/publish"
+  dotnet publish "$BUILD_DIR/PetBuddies-API/PetBuddies-API/PetBuddies-API.csproj" \
+    -c Release -o "$ROOT/runtime/net/publish" -p:UseAppHost=false -v q --nologo
+  docker build --platform linux/amd64 -t "$ACR_NAME.azurecr.io/$IMG_NET:$TAG" "$ROOT/runtime/net"
+fi
 
 echo ""
 echo "push..."
 az acr login --name "$ACR_NAME"
-for img in "$IMG_ORACLE" "$IMG_JAVA" "$IMG_NET"; do
+for img in "$IMG_ORACLE" "$IMG_JAVA" ${COM_BACKOFFICE:+"$IMG_NET"}; do
   docker push "$ACR_NAME.azurecr.io/$img:$TAG"
 done
 
