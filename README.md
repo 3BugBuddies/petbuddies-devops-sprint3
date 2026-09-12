@@ -52,7 +52,7 @@ A autenticação é JWT: a API de cuidado emite o token, o back-office o valida 
        │          │   ┌─────────────┐        ┌──────────────────────────────┐     │
        │  HTTPS   │   │     ACR     │ imagem │  ACI · API de cuidado (Java) │     │
        └──────────┼──▶│  petbuddies │───────▶│        porta 8080            │     │
-                  │   │   rm563925  │        └──────────────┬───────────────┘     │
+                  │   │   rm565339  │        └──────────────┬───────────────┘     │
                   │   └─────────────┘                       │ JDBC                │
   Desenvolvedor   │          │ imagem                       ▼                     │
        │  az cli  │          │              ┌──────────────────────────────┐      │
@@ -110,7 +110,7 @@ de Key Vault. **Nenhum recurso é criado aqui.**
 ./scripts/01_acr.sh
 ```
 
-Cria o grupo de recursos `rg-petbuddies-devops` e o ACR `petbuddiesrm563925` (SKU Basic, admin
+Cria o grupo de recursos `rg-petbuddies-devops` e o ACR `petbuddiesrm565339` (SKU Basic, admin
 habilitado — é com a credencial de admin que os ACIs se autenticam no registry).
 
 ### 4. Construir e publicar as três imagens
@@ -122,13 +122,13 @@ habilitado — é com a credencial de admin que os ACIs se autenticam no registr
 Clona as duas APIs, constrói as três imagens em `linux/amd64` e as envia ao ACR:
 
 ```bash
-docker build --platform linux/amd64 -t petbuddiesrm563925.azurecr.io/rm563925-oracle-petbuddies:v1 oracle/
-docker build --platform linux/amd64 -t petbuddiesrm563925.azurecr.io/rm563925-api-java:v1 runtime/java/
-docker build --platform linux/amd64 -t petbuddiesrm563925.azurecr.io/rm563925-api-net:v1 runtime/net/
-az acr login --name petbuddiesrm563925
-docker push petbuddiesrm563925.azurecr.io/rm563925-oracle-petbuddies:v1
-docker push petbuddiesrm563925.azurecr.io/rm563925-api-java:v1
-docker push petbuddiesrm563925.azurecr.io/rm563925-api-net:v1
+docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1 oracle/
+docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 runtime/java/
+docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-net:v1 runtime/net/
+az acr login --name petbuddiesrm565339
+docker push petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1
+docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
+docker push petbuddiesrm565339.azurecr.io/rm565339-api-net:v1
 ```
 
 ### 5. Cofre de segredos
@@ -160,10 +160,10 @@ o seed de demonstração), **migrations do EF Core** no .NET (4 tabelas).
 
 | Serviço | URL |
 |---|---|
-| API de cuidado (Swagger) | http://petbuddies-java-rm563925.mexicocentral.azurecontainer.io:8080/swagger-ui.html |
-| Back-office (API) | http://petbuddies-net-rm563925.mexicocentral.azurecontainer.io:8080/api/protocolo |
-| Health do back-office | http://petbuddies-net-rm563925.mexicocentral.azurecontainer.io:8080/health/live |
-| Oracle | `petbuddies-oracle-rm563925.mexicocentral.azurecontainer.io:1521/XEPDB1` |
+| API de cuidado (Swagger) | http://petbuddies-java-rm565339.mexicocentral.azurecontainer.io:8080/swagger-ui.html |
+| Back-office (API) | http://petbuddies-net-rm565339.mexicocentral.azurecontainer.io:8080/api/protocolo |
+| Health do back-office | http://petbuddies-net-rm565339.mexicocentral.azurecontainer.io:8080/health/live |
+| Oracle | `petbuddies-oracle-rm565339.mexicocentral.azurecontainer.io:1521/XEPDB1` |
 
 Usuários de demonstração: `maria@email.com` (tutor) e `ana@clinica.com` (veterinária), senha
 `petbuddies123`.
@@ -180,7 +180,7 @@ O CRUD demonstrado é **`T_PB_RESPONSAVEL` → `T_PB_ANIMAL`**: o tutor e seus a
 `ID_RESPONSAVEL`. São tabelas do núcleo do produto — sem elas não existe cuidado de pet.
 
 ```bash
-BASE=http://petbuddies-java-rm563925.mexicocentral.azurecontainer.io:8080
+BASE=http://petbuddies-java-rm565339.mexicocentral.azurecontainer.io:8080
 
 TOKEN=$(curl -s -X POST $BASE/api/auth/login -H 'Content-Type: application/json' \
   -d '{"login":"maria@email.com","senha":"petbuddies123"}' | jq -r .token)
@@ -205,7 +205,7 @@ curl -X DELETE $BASE/api/animal/1 -H "Authorization: Bearer $TOKEN"
 
 ### Evidência de persistência — SELECT direto no banco
 
-Conecte em `petbuddies-oracle-rm563925.mexicocentral.azurecontainer.io:1521/XEPDB1` com o usuário
+Conecte em `petbuddies-oracle-rm565339.mexicocentral.azurecontainer.io:1521/XEPDB1` com o usuário
 `PETBUDDIES_CUIDADO` e execute, após cada operação:
 
 ```sql

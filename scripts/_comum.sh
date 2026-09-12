@@ -1,5 +1,5 @@
 # Variáveis compartilhadas por todos os scripts. Carregado com: source scripts/_comum.sh
-RM="rm563925"
+RM="rm565339"
 RESOURCE_GROUP="rg-petbuddies-devops"
 LOCATION="mexicocentral"          # ACI habilitado e com quota nesta assinatura (ver 00_preflight)
 ACR_NAME="petbuddies$RM"
