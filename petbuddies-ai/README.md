@@ -41,6 +41,7 @@ O serviço cobre o ciclo de cuidado de um animal de estimação: cadastro clíni
 | jjwt (`api`/`impl`/`jackson`) | SEGURANÇA | emissão e validação do token HS256 |
 | Spring AI (`spring-ai-starter-model-openai`) | AI | Gemini 2.5 Flash via camada de compatibilidade OpenAI |
 | Bean Validation | I/O | validação de DTOs com anotações Jakarta |
+| Spring Boot Actuator | OPS | `GET /actuator/health` aberto, com o status da aplicação e do banco |
 | Springdoc OpenAPI | DEV | Swagger UI com tags por domínio |
 | Lombok | DEV | `@Getter @Setter @NoArgsConstructor @AllArgsConstructor` em entidades e DTOs |
 | spring-dotenv | DEV | carrega `.env` em desenvolvimento local |
@@ -55,6 +56,7 @@ O serviço cobre o ciclo de cuidado de um animal de estimação: cadastro clíni
 - **Flyway** — dono do schema (`ddl-auto=validate`, nunca `update`)
 - **Spring Security** — duas cadeias (API com Bearer, web com formulário) e JWT via `jjwt`
 - **Spring HATEOAS** — respostas em `EntityModel`/`CollectionModel`, com assemblers dedicados
+- **Spring Boot Actuator** — só o `health` exposto
 - **Bean Validation** (Jakarta) · **Springdoc OpenAPI 2.8.8** · **Lombok**
 
 ---
@@ -280,6 +282,8 @@ Duas cadeias de segurança no mesmo processo:
 
 O token carrega o perfil (`VET` ou `TUTOR`) e o vínculo (`veterinarioId` ou `responsavelId`), e é o mesmo aceito pelo `PetBuddies-API` (.NET) — o segredo é compartilhado.
 
+**Rotas por perfil na API:** as escritas são do veterinário — consulta, registro de atendimento, procedimento, prescrição, regra de prescrição, condição clínica, janela, motor de planos e o cadastro clínico (animal, responsável, veterinário, clínica). O check-in é do tutor, porque o relato é de quem convive com o animal. **O portão é por método:** todo `GET` segue aberto a qualquer token válido, e o tutor lê o próprio animal normalmente.
+
 **Rotas por perfil na web:** `/painel`, `/clinica`, `/equipe`, `/tutores`, `/pacientes` e `/agenda` exigem `VET`; `/meus-animais` exige `TUTOR`. O tutor recebe `403` nas rotas da clínica, e a lista dele é escopada pelo `responsavelId` da sessão, nunca por parâmetro na URL.
 
 ---
@@ -377,6 +381,14 @@ Erro de negócio numa tela devolve página HTML, não JSON — o `WebExceptionHa
 ## Recursos e Rotas
 
 Respostas de recurso vêm em envelope HATEOAS (`EntityModel` / `CollectionModel`). Erros vêm como `ErrorDto{ code, message }`. Parâmetros, corpos e códigos de cada rota estão no Swagger.
+
+### Saúde
+
+| Método | Rota |
+|---|---|
+| `GET` | `/actuator/health` |
+
+Aberta, sem token. Responde `200 {"status":"UP"}` com o banco no ar e `503 {"status":"DOWN"}` com o banco fora — sem detalhe dos componentes. É a rota que o health check do `PetBuddies-API` consulta para saber se este serviço está de pé.
 
 ### Autenticação
 

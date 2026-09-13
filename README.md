@@ -206,11 +206,15 @@ O CRUD demonstrado é **`T_PB_RESPONSAVEL` → `T_PB_ANIMAL`**, um relacionament
 
 São tabelas do núcleo do produto: sem tutor e sem animal não existe cuidado de pet.
 
+Inclusão, alteração e exclusão em animal e responsável são restritas ao perfil **veterinária**; o
+tutor só consulta. Por isso o CRUD abaixo autentica com `ana@clinica.com`. No Swagger, o token vai
+em **Authorize** e fica guardado ao recarregar a página.
+
 ```bash
 BASE=http://petbuddies-java-rm565339.chilecentral.azurecontainer.io:8080
 
 TOKEN=$(curl -s -X POST $BASE/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"login":"maria@email.com","senha":"petbuddies123"}' | jq -r .token)
+  -d '{"login":"ana@clinica.com","senha":"petbuddies123"}' | jq -r .token)
 
 # CREATE
 curl -X POST $BASE/api/animal -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
