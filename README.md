@@ -325,7 +325,9 @@ serviço para configurar o outro.
     └── 99_destroy.sh               remove tudo
 ```
 
-**Sem volume no banco.** O Oracle não suporta seus datafiles sobre SMB, que é o que o Azure Files
-oferece ao ACI, e o primeiro boot sobre ele fica 2 a 3× mais lento. Como o schema de cada serviço
+**Sem volume no banco.** O Oracle não sobe com seus datafiles sobre Azure Files. Testado em
+2026-09-12: o container entra em `CrashLoopBackOff`, morre dez segundos após iniciar e acumula
+reinícios sem jamais abrir o banco — o Azure Files entrega um compartilhamento SMB, e o Oracle
+precisa de semântica POSIX para os datafiles. Como o schema de cada serviço
 nasce na subida da própria aplicação, pelo Flyway, um restart do container reconstrói o banco em vez
 de perdê-lo. A entrega desta Sprint não exige volume nomeado.
