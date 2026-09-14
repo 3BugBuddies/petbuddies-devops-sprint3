@@ -35,8 +35,8 @@ O tutor entra pelo aplicativo; a veterinária usa as mesmas rotas com perfil pr�
   ficam no mesmo registro, acessível ao tutor e à clínica.
 - **A clínica configura o que oferece sem depender de desenvolvimento.** Protocolos, regras e ofertas
   são dados, não código.
-- **Infraestrutura reproduzível.** Sete scripts recriam o ambiente inteiro do zero, e um script o
-  apaga por completo.
+- **Infraestrutura reproduzível.** `scripts/comandos.txt` recria o ambiente inteiro do zero, seção por
+  seção, e a última seção o apaga por completo.
 
 ---
 
@@ -68,15 +68,10 @@ da API. Não há passo manual de schema entre um e outro.
 
 ## How To — execução completa
 
-> **Validar mudança sem derrubar o ambiente que está no ar:** grupo, registry, cofre e rótulos de DNS
-> são sobrescrevíveis por variável de ambiente — nenhuma delas mora no `.env`, então só existem se
-> você as escrever na própria linha de comando. Todo script anuncia o alvo na primeira linha e avisa
-> em destaque quando alguma sobrescrita está ativa.
->
-> ```bash
-> PETBUDDIES_RG=rg-petbuddies-teste PETBUDDIES_ACR=petbuddiesteste563925 \
-> PETBUDDIES_KV=kv-petbuddies-teste PETBUDDIES_SUFIXO=-teste ./scripts/01_acr.sh
-> ```
+> Os comandos ficam em `scripts/comandos.txt`, consolidados num arquivo só e organizados por seção
+> numerada (00 a 99) — cola cada seção no Git Bash, na ordem. `scripts/variaveis-ambiente.txt` traz
+> as variáveis (nome do grupo de recursos, registry, etc.); roda ele uma vez, logo depois de clonar,
+> antes da seção `01`.
 
 ### Pré-requisitos
 
@@ -86,86 +81,67 @@ da API. Não há passo manual de schema entre um e outro.
 ### 1. Clonar e configurar
 
 ```bash
-git clone https://github.com/GNogueirovski/petbuddies-devops.git
-cd petbuddies-devops
+git clone https://github.com/3BugBuddies/petbuddies-devops-sprint3.git
+cd petbuddies-devops-sprint3
 cp .env.example .env
 nano .env          # preencher as senhas (só alfanuméricas, começando por letra)
 ```
 
-### 2. Teste local (opcional)
+### 2. Carregar as variáveis
+
+Cola o conteúdo de `scripts/variaveis-ambiente.txt` no terminal (preenche os valores em branco antes,
+se ainda não tiver escolhido nomes de recurso). Fica valendo enquanto essa aba do terminal continuar
+aberta.
+
+### 3. Teste local (opcional)
 
 Antes de subir à nuvem, o mesmo desenho roda na máquina com Docker Compose — o banco e a API, na
 mesma rede:
 
 ```bash
-./scripts/02_build-push.sh        # clona a API em .build/ e constrói as imagens
 docker compose up -d --build
 docker compose ps                 # aguardar o MySQL ficar healthy
 curl http://localhost:8080/swagger-ui.html
 docker compose down -v            # derruba e APAGA o volume
 ```
 
-> Cada script pode gravar a própria saída, o que deixa a evidência da execução em arquivo:
-> `./scripts/01_acr.sh > 01_acr.log`. Os `.log` ficam fora do Git — eles ecoam nome de recurso e
-> saída bruta da CLI.
+### 4. Conferir o ambiente
 
-### 3. Conferir o ambiente
+Cola a seção `00 — PREFLIGHT` de `scripts/comandos.txt`.
 
-```bash
-./scripts/00_preflight.sh
-```
+Confere sessão, papel na subscription e providers registrados. **Nenhum recurso é criado aqui.**
 
-Confere sessão, identidade no Graph, papel na subscription, providers, quota de ACI e colisão de nome
-de Key Vault. **Nenhum recurso é criado aqui.**
+### 5. Criar o registry
 
-### 4. Criar o registry
-
-```bash
-./scripts/01_acr.sh
-```
+Cola a seção `01 — RESOURCE GROUP + CONTAINER REGISTRY + STORAGE ACCOUNT`.
 
 Cria o grupo de recursos `rg-petbuddies-devops`, o ACR `petbuddiesrm565339` (SKU Basic, admin
 habilitado — é com a credencial de admin que os ACIs se autenticam no registry) e a storage account
 `stpetbuddiesrm565339` com o file share `mysql-cuidado-volume` — o volume persistente do MySQL.
 
-### 5. Construir e publicar as imagens
+### 6. Construir e publicar as imagens
 
-```bash
-./scripts/02_build-push.sh
-```
+Cola a seção `02 — IMAGENS`.
 
-Clona a API, constrói as duas imagens em `linux/amd64` e as envia ao ACR:
+Importa o MySQL do Docker Hub pro ACR (`acr import`), constrói a imagem da API em `linux/amd64` e
+publica as duas no registry.
 
-```bash
-az acr import --name petbuddiesrm565339 --source docker.io/library/mysql:8.0 \
-              --image rm565339-mysql-petbuddies:v1
-docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 api/
-az acr login --name petbuddiesrm565339
-docker push petbuddiesrm565339.azurecr.io/rm565339-mysql-petbuddies:v1
-docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
-```
+### 7. Cofre de segredos
 
-### 6. Cofre de segredos
+Cola a seção `03 — KEY VAULT E SEGREDOS`. Cria o Key Vault, dá a você a role `Key Vault Administrator`
+nele e grava os 8 segredos (lidos do `.env`).
 
-```bash
-./scripts/03_key-vault.sh
-```
+### 8. Subir os containers
 
-### 7. Subir os containers
-
-```bash
-./scripts/04_aci-mysql.sh      # espera o banco abrir antes de retornar
-./scripts/05_aci-java.sh
-```
+Cola as seções `04 — ACI DO MYSQL` e `05 — ACI DA API JAVA`, nessa ordem — a `04` espera o banco abrir
+antes de seguir.
 
 O schema é criado na subida da aplicação, pelo **Flyway**: as tabelas mais o seed de demonstração
 (`V2__seed_demonstracao.sql`), que já cobre a carga inicial das duas tabelas do CRUD.
 
-### 8. Encerrar
+### 9. Encerrar
 
-```bash
-./scripts/99_destroy.sh
-```
+Cola a seção `99 — DESTRUIR TUDO`.
 
 ---
 
@@ -308,13 +284,8 @@ serviço para configurar o outro.
 │   ├── pom.xml
 │   └── src/
 └── scripts/
-    ├── 00_preflight.sh             confere o ambiente; não cria nada
-    ├── 01_acr.sh                   grupo de recursos + Container Registry + Storage Account
-    ├── 02_build-push.sh            build das imagens + push
-    ├── 03_key-vault.sh             cofre e segredos
-    ├── 04_aci-mysql.sh             container do banco, com o volume da storage account
-    ├── 05_aci-java.sh              container da API
-    └── 99_destroy.sh               remove tudo
+    ├── comandos.txt                todos os comandos do deploy, por seção (00 a 99)
+    └── variaveis-ambiente.txt      modelo das variáveis de nome de recurso
 ```
 
 **Volume no banco: Storage Account, montada direto no MySQL.** Um Oracle rodando sobre Azure Files
