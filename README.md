@@ -68,11 +68,6 @@ da API. Não há passo manual de schema entre um e outro.
 
 ## How To — execução completa
 
-> Os comandos ficam em `scripts/comandos.txt`, consolidados num arquivo só e organizados por seção
-> numerada (00 a 99) — cola cada seção no Git Bash, na ordem. `scripts/variaveis-ambiente.txt` traz
-> as variáveis (nome do grupo de recursos, registry, etc.); roda ele uma vez, logo depois de clonar,
-> antes da seção `01`.
-
 ### Pré-requisitos
 
 - Azure CLI (`az`), Docker, Git, JDK 21 + Maven
