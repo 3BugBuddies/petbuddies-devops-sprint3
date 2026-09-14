@@ -1,0 +1,54 @@
+# MODELO EM BRANCO: preenche cada valor abaixo antes de colar no terminal.
+
+
+# =====================================================================
+# BLOCO A — roda UMA VEZ, logo depois de clonar o repositório
+# =====================================================================
+# Nenhuma dessas depende de nenhum recurso ter sido criado ainda — só
+# precisam do seu login no "az" e do arquivo .env já existir na pasta.
+# Fica valendo enquanto essa aba/janela do terminal continuar aberta.
+
+RESOURCE_GROUP=""
+LOCATION=""
+ACR_NAME=""
+KEY_VAULT=""
+STORAGE_ACCOUNT=""
+FILE_SHARE=""
+TAG=""
+IMG_MYSQL=""
+IMG_MYSQL_ORIGEM=""
+IMG_JAVA=""
+ACI_MYSQL=""
+ACI_JAVA=""
+DNS_MYSQL=""
+DNS_JAVA=""
+FQDN_MYSQL=""
+FQDN_JAVA=""
+
+
+SUB=$(az account show --query id -o tsv)
+OBJ=$(az ad signed-in-user show --query id -o tsv)
+
+set -a; source .env; set +a
+
+segredo() { az keyvault secret show --vault-name "$KEY_VAULT" --name "$1" --query value -o tsv; }
+
+
+# =====================================================================
+# BLOCO B — roda DEPOIS do Passo 01 (assim que o ACR e a Storage Account existirem)
+# =====================================================================
+# Estas quatro dependem de recurso já criado: buscam credencial/chave de
+# algo que só passa a existir depois do "az acr create" e do
+# "az storage account create" do Passo 01. Rodar antes disso devolve vazio.
+
+STORAGE_CONN=$(az storage account show-connection-string --name "$STORAGE_ACCOUNT" \
+  --resource-group "$RESOURCE_GROUP" --query connectionString -o tsv)
+
+ACR_USER=$(az acr credential show -n "$ACR_NAME" -g "$RESOURCE_GROUP" --query username -o tsv)
+ACR_PASS=$(az acr credential show -n "$ACR_NAME" -g "$RESOURCE_GROUP" --query 'passwords[0].value' -o tsv)
+STORAGE_KEY=$(az storage account keys list --account-name "$STORAGE_ACCOUNT" -g "$RESOURCE_GROUP" --query '[0].value' -o tsv)
+
+# STORAGE_CONN é usado só uma vez, no próprio Passo 01 (criar o file share).
+# ACR_USER/ACR_PASS/STORAGE_KEY são usados no Passo 03, pra gravar como
+# segredo no Key Vault (depois disso, quem lê esses valores é a função
+# segredo(), não essas variáveis).
