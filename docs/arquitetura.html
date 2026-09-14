@@ -279,8 +279,8 @@
           <div><b>Azure Container Registry</b><span>petbuddiesrm565339 · SKU Basic · admin habilitado</span></div></div>
 
         <div class="img"><svg class="ico" width="26" height="19"><use href="#i-imagem"/></svg>
-          <div><div class="n">rm565339-oracle-petbuddies:v1</div>
-            <div class="m">Oracle XE 21c · linux/amd64</div></div>
+          <div><div class="n">rm565339-mysql-petbuddies:v1</div>
+            <div class="m">MySQL 8.0 · linux/amd64</div></div>
           <div class="via">acr import</div></div>
         <div class="img"><svg class="ico" width="26" height="19"><use href="#i-imagem"/></svg>
           <div><div class="n">rm565339-api-java:v1</div>
@@ -289,7 +289,10 @@
 
         <div class="apoio"><svg class="ico" width="26" height="26"><use href="#i-vault"/></svg>
           <div><div class="n">Key Vault</div>
-            <div class="d">kv-petbuddies-rm565339 · sete segredos</div></div></div>
+            <div class="d">kv-petbuddies-rm565339 · oito segredos</div></div></div>
+        <div class="apoio"><svg class="ico" width="26" height="26"><use href="#i-folder"/></svg>
+          <div><div class="n">Storage Account</div>
+            <div class="d">stpetbuddiesrm565339 · file share mysql-cuidado-volume</div></div></div>
       </div>
 
       <div class="pont">
@@ -302,14 +305,15 @@
           <svg class="ico" width="34" height="34"><use href="#i-cubo"/></svg>
           <div>
             <div class="tit">Azure Container Instance</div>
-            <div class="n">Oracle XE 21c</div>
+            <div class="n">MySQL 8.0</div>
             <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>2 vCPU · 4 GB</div>
             <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>16 tabelas pelo Flyway</div>
+            <div class="check"><svg class="ico" width="13" height="13"><use href="#i-check"/></svg>volume: file share da Storage Account</div>
           </div>
-          <div class="ext"><i></i><u></u><span>acesso externo<br>porta 1521</span></div>
+          <div class="ext"><i></i><u></u><span>acesso externo<br>porta 3306</span></div>
         </div>
 
-        <div class="jdbc"><i></i>JDBC · schema <code>PETBUDDIES_CUIDADO</code><i></i></div>
+        <div class="jdbc"><i></i>JDBC · database <code>petbuddies_cuidado</code><i></i></div>
 
         <div class="aci">
           <svg class="ico" width="34" height="34"><use href="#i-cubo"/></svg>

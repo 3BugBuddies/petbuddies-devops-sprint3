@@ -44,9 +44,11 @@ public class PrescricaoEntity {
     @Column(name = "DT_INICIO", nullable = false)
     private LocalDate dataInicio;
 
-    // CLOB: sem @Lob o Hibernate declara VARCHAR2(255) e o validate recusa a subida.
+    // TEXT: sem @Lob o Hibernate declara VARCHAR(255) e o validate recusa a subida.
+    // length=65535 força o Hibernate a esperar TEXT em vez de TINYTEXT (default
+    // do MySQL para @Lob sem length, que trunca em 255 caracteres).
     @Lob
-    @Column(name = "TX_ORIENTACAO")
+    @Column(name = "TX_ORIENTACAO", length = 65535)
     private String orientacao;
 
     // Nasce nulo, sem FK.

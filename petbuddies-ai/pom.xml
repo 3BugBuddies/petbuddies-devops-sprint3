@@ -77,24 +77,25 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- ===== ORACLE JDBC ===== -->
+        <!-- ===== MYSQL JDBC ===== -->
         <dependency>
-            <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc11</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
 
         <!-- ===== VERSIONAMENTO DE SCHEMA (FLYWAY) =====
-             flyway-database-oracle NAO e opcional: a partir do Flyway 10 o suporte
-             a cada banco vive num artefato proprio, e sem ele o Flyway sobe e nao
-             reconhece o Oracle. As duas versoes vem do BOM do Spring Boot. -->
+             flyway-mysql NAO e opcional: a partir do Flyway 10 o suporte a cada
+             banco vive num artefato proprio, e sem ele o Flyway sobe e nao
+             reconhece o MySQL ("Unsupported Database: MySQL 8.0"). As duas
+             versoes vem do BOM do Spring Boot. -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-database-oracle</artifactId>
+            <artifactId>flyway-mysql</artifactId>
         </dependency>
 
         <!-- ===== SEGURANÇA ===== -->

@@ -3,29 +3,26 @@
 #   ./scripts/02_build-push.sh   clona as duas APIs em .build/ (pré-requisito)
 #   docker compose up -d --build
 #   docker compose down -v       derruba e APAGA os volumes
-#
-# A imagem do Oracle é amd64 (gvenzl só publica essa arquitetura), então em Mac
-# ARM ela roda emulada e sobe devagar. Na nuvem é nativo.
 services:
 
-  oracle:
-    image: gvenzl/oracle-xe:21-slim
-    container_name: petbuddies_oracle
+  mysql:
+    image: mysql:8.0
+    container_name: petbuddies_mysql
     env_file: [.env]
     environment:
-      ORACLE_PASSWORD: ${ORACLE_ROOT_PASSWORD}
-      ORACLE_CHARACTERSET: AL32UTF8
-      APP_USER: ${ORACLE_USER_CUIDADO}
-      APP_USER_PASSWORD: ${ORACLE_PASSWORD_CUIDADO}
-    ports: ["1521:1521"]
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: petbuddies_cuidado
+      MYSQL_USER: ${MYSQL_USER_CUIDADO}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD_CUIDADO}
+    ports: ["3306:3306"]
     volumes:
-      - oracle_dados:/opt/oracle/oradata
+      - mysql_dados:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 10s
       retries: 30
-      start_period: 300s
+      start_period: 60s
     networks: [petbuddies-net]
 
   api-cuidado:
@@ -35,14 +32,14 @@ services:
     container_name: petbuddies_java
     env_file: [.env]
     environment:
-      ORACLE_URL: jdbc:oracle:thin:@oracle:1521/XEPDB1
-      ORACLE_USER: ${ORACLE_USER_CUIDADO}
-      ORACLE_PASSWORD: ${ORACLE_PASSWORD_CUIDADO}
+      MYSQL_URL: jdbc:mysql://mysql:3306/petbuddies_cuidado
+      MYSQL_USER: ${MYSQL_USER_CUIDADO}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD_CUIDADO}
       PETBUDDIES_JWT_SECRET: ${PETBUDDIES_JWT_SECRET}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       JAVA_TOOL_OPTIONS: "-Xmx512m"
     depends_on:
-      oracle: { condition: service_healthy }
+      mysql: { condition: service_healthy }
     ports: ["8080:8080"]
     networks: [petbuddies-net]
 
@@ -50,4 +47,4 @@ networks:
   petbuddies-net: { driver: bridge }
 
 volumes:
-  oracle_dados:
+  mysql_dados:

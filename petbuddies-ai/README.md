@@ -35,8 +35,8 @@ O serviço cobre o ciclo de cuidado de um animal de estimação: cadastro clíni
 | Spring HATEOAS | WEB | `_links` / `_embedded` em toda resposta de recurso |
 | Thymeleaf | WEB | as 8 telas server-rendered, vet e tutor |
 | Spring Data JPA | SQL | 16 entidades JPA, um repositório por agregado |
-| Oracle Driver (`ojdbc11`) | SQL | Oracle 23 local (`gvenzl/oracle-free`) ou Oracle FIAP |
-| Flyway (`flyway-core` + `flyway-database-oracle`) | SQL | dono do schema — `V1` cria as 16 tabelas, `ddl-auto=validate` |
+| MySQL Driver (`mysql-connector-j`) | SQL | MySQL 8.0 local (`docker-compose.yml`) ou na nuvem (ACI) |
+| Flyway (`flyway-core`) | SQL | dono do schema — `V1` cria as 16 tabelas, `ddl-auto=validate` |
 | Spring Security | SEGURANÇA | duas cadeias: API com Bearer JWT, web com formulário e sessão |
 | jjwt (`api`/`impl`/`jackson`) | SEGURANÇA | emissão e validação do token HS256 |
 | Spring AI (`spring-ai-starter-model-openai`) | AI | Gemini 2.5 Flash via camada de compatibilidade OpenAI |
@@ -52,7 +52,7 @@ O serviço cobre o ciclo de cuidado de um animal de estimação: cadastro clíni
 
 - **Java 21** · Spring Boot 3.4.5
 - **Spring AI 1.1.6** — Gemini `gemini-2.5-flash`, `temperature=0`
-- **Spring Data JPA + Hibernate** sobre **Oracle** (23 local via `gvenzl/oracle-free`, ou FIAP)
+- **Spring Data JPA + Hibernate** sobre **MySQL 8.0** (local via `docker-compose.yml`, ou na nuvem)
 - **Flyway** — dono do schema (`ddl-auto=validate`, nunca `update`)
 - **Spring Security** — duas cadeias (API com Bearer, web com formulário) e JWT via `jjwt`
 - **Spring HATEOAS** — respostas em `EntityModel`/`CollectionModel`, com assemblers dedicados
@@ -95,35 +95,26 @@ br/com/fiap/petbuddies/
 ### Pré-requisitos
 
 - Java 21+ · Maven 3.9+ (este repositório não versiona o Maven Wrapper — use o `mvn` do sistema)
-- Docker, para o Oracle local — **ou** acesso ao Oracle FIAP
+- Docker, para o MySQL local
 - Uma chave do Gemini ([Google AI Studio](https://aistudio.google.com))
 
-### Banco local (recomendado)
+### Banco local
 
 ```bash
 cp .env.example .env
-# preencha ORACLE_PASSWORD, ORACLE_SYS_PASSWORD, PETBUDDIES_JWT_SECRET e GEMINI_API_KEY
+# preencha MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD, PETBUDDIES_JWT_SECRET e GEMINI_API_KEY
 
-docker compose up -d --wait                          # sobe só o Oracle
+docker compose up -d --wait                          # sobe só o MySQL
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
 Para rodar mais de uma instância em paralelo, parametrize porta e projeto:
 
 ```bash
-COMPOSE_PROJECT_NAME=minha-instancia ORACLE_PORT=1581 docker compose up -d --wait
+COMPOSE_PROJECT_NAME=minha-instancia MYSQL_PORT=3316 docker compose up -d --wait
 ```
 
 Derrube com `docker compose down -v`. Os bancos desta sprint são resetados a cada subida, não migrados.
-
-### Oracle FIAP (alternativa)
-
-```bash
-cp .env.example .env
-# ORACLE_URL já aponta para o Oracle FIAP; preencha ORACLE_USER (seu RM) e ORACLE_PASSWORD
-
-mvn spring-boot:run -Dspring-boot.run.profiles=dev
-```
 
 A aplicação sobe em `http://localhost:8080`, com o Swagger em `/swagger-ui.html`.
 
@@ -133,10 +124,10 @@ Todas em `.env.example`; `.env` está no `.gitignore`.
 
 | Variável | Para quê |
 |---|---|
-| `ORACLE_URL` | conexão com o Oracle. Default aponta para o Oracle FIAP; o `docker-compose.yml` aponta para o container local |
-| `ORACLE_USER`, `ORACLE_PASSWORD` | credencial do schema. **A aplicação não sobe sem elas.** `ORACLE_USER` em maiúsculas — o Oracle guarda nome de schema assim |
-| `ORACLE_SYS_PASSWORD` | senha do `SYS` do container local; só o `docker-compose.yml` usa |
-| `ORACLE_PORT` | porta do Oracle no host, para rodar instâncias em paralelo |
+| `MYSQL_URL` | conexão com o MySQL. O `docker-compose.yml` aponta para o container local |
+| `MYSQL_USER`, `MYSQL_PASSWORD` | credencial do schema. **A aplicação não sobe sem elas.** |
+| `MYSQL_ROOT_PASSWORD` | senha do `root` do container local; só o `docker-compose.yml` usa |
+| `MYSQL_PORT` | porta do MySQL no host, para rodar instâncias em paralelo |
 | `PETBUDDIES_JWT_SECRET` | segredo `HS256` do token — mínimo 32 bytes, o mesmo valor do .NET. Abaixo disso a aplicação recusa subir |
 | `GEMINI_API_KEY` | chave do Gemini. Ausente do ambiente, a aplicação não sobe; presente mas vazia, sobe e só as chamadas de IA falham |
 
@@ -299,7 +290,7 @@ flowchart LR
     Java["petbuddies-ai (Java)<br/>registro, agenda, prescrição, cuidado"]
     Java -->|"GET /api/protocolo"| Net["PetBuddies-API (.NET)<br/>catálogo e política"]
     Java --> Gemini["Gemini 2.5 Flash<br/>interpreta narrativa"]
-    Java --> Oracle[("Oracle<br/>16 tabelas")]
+    Java --> MySQL[("MySQL<br/>16 tabelas")]
 ```
 
 ### Plano de cuidado a partir de protocolo
@@ -311,7 +302,7 @@ sequenceDiagram
     participant V as Veterinária
     participant J as petbuddies-ai
     participant N as PetBuddies-API
-    participant DB as Oracle
+    participant DB as MySQL
 
     V->>J: POST /api/motor/plano/instanciar-preventivo
     J->>DB: já existe plano ATIVO para o animal?
@@ -335,7 +326,7 @@ sequenceDiagram
     participant T as Tutor
     participant J as petbuddies-ai
     participant G as Gemini
-    participant DB as Oracle
+    participant DB as MySQL
 
     T->>J: POST /api/checkin/extracao — narrativa em texto livre
     J->>DB: condições clínicas do vocabulário da clínica

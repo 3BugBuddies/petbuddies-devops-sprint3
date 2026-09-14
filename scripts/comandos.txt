@@ -1,0 +1,209 @@
+# =====================================================================
+# COMANDOS DO DEPLOY — ACR + STORAGE ACCOUNT + ACI (MySQL + API Java)
+# =====================================================================
+# Cola cada bloco no Git Bash, na ordem. Cada seção numerada é
+# AUTOSSUFICIENTE: já vem com as variáveis que usa, então dá pra rodar
+# qualquer seção sozinha, numa aba nova, sem precisar "lembrar" de rodar
+# outra coisa antes.
+#
+# Todo o arquivo usa "#" pra comentário (é o comentário do Bash) — dá pra
+# colar qualquer trecho, incluindo títulos e separadores, sem quebrar o
+# terminal.
+#
+# NUNCA digite segredo (senha, chave, token) direto neste arquivo — ele vai
+# pro Git. Os segredos vêm do ".env" (que é ignorado pelo Git) via
+# "source .env", no passo 03.
+
+
+# ---------------------------------------------------------------------
+# 00 — PREFLIGHT (só leitura, não cria nada)
+# ---------------------------------------------------------------------
+KEY_VAULT=kv-petbuddies-rm565339
+
+az account show -o table
+
+SUB=$(az account show --query id -o tsv)
+OBJ=$(az ad signed-in-user show --query id -o tsv)
+
+MSYS_NO_PATHCONV=1 az role assignment list --assignee-object-id "$OBJ" \
+  --scope "/subscriptions/$SUB" --include-inherited \
+  --query "[?roleDefinitionName=='Owner' || roleDefinitionName=='Contributor']" -o table
+
+
+# ---------------------------------------------------------------------
+# 01 — RESOURCE GROUP + CONTAINER REGISTRY + STORAGE ACCOUNT
+# ---------------------------------------------------------------------
+RESOURCE_GROUP=rg-petbuddies-devops
+LOCATION=chilecentral
+ACR_NAME=petbuddiesrm565339
+STORAGE_ACCOUNT=stpetbuddiesrm565339
+FILE_SHARE=mysql-cuidado-volume
+
+az group create -n "$RESOURCE_GROUP" -l "$LOCATION" -o table
+
+az acr create -g "$RESOURCE_GROUP" -n "$ACR_NAME" -l "$LOCATION" \
+  --sku Basic --admin-enabled true -o table
+
+az storage account create -g "$RESOURCE_GROUP" -n "$STORAGE_ACCOUNT" -l "$LOCATION" \
+  --sku Standard_LRS -o table
+
+STORAGE_CONN=$(az storage account show-connection-string --name "$STORAGE_ACCOUNT" \
+  --resource-group "$RESOURCE_GROUP" --query connectionString -o tsv)
+
+az storage share create --name "$FILE_SHARE" --account-name "$STORAGE_ACCOUNT" \
+  --connection-string "$STORAGE_CONN" -o table
+
+
+# ---------------------------------------------------------------------
+# 02 — IMAGENS (import do MySQL + build/push da API Java)
+# ---------------------------------------------------------------------
+RESOURCE_GROUP=rg-petbuddies-devops
+ACR_NAME=petbuddiesrm565339
+TAG=v1
+IMG_MYSQL=rm565339-mysql-petbuddies
+IMG_MYSQL_ORIGEM=docker.io/library/mysql:8.0
+IMG_JAVA=rm565339-api-java
+
+az acr import --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" \
+  --source "$IMG_MYSQL_ORIGEM" --image "$IMG_MYSQL:$TAG" --force
+
+cd petbuddies-ai
+mvn -q package -DskipTests
+cp target/*.jar app.jar
+docker build --platform linux/amd64 -f Dockerfile.runtime \
+  -t "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" .
+cd ..
+
+az acr login --name "$ACR_NAME"
+docker push "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG"
+
+
+# ---------------------------------------------------------------------
+# 03 — KEY VAULT E SEGREDOS (8 segredos)
+# ---------------------------------------------------------------------
+RESOURCE_GROUP=rg-petbuddies-devops
+LOCATION=chilecentral
+ACR_NAME=petbuddiesrm565339
+KEY_VAULT=kv-petbuddies-rm565339
+STORAGE_ACCOUNT=stpetbuddiesrm565339
+
+az keyvault create -n "$KEY_VAULT" -g "$RESOURCE_GROUP" -l "$LOCATION" \
+  --enable-rbac-authorization true -o table
+
+SUB=$(az account show --query id -o tsv)
+OBJ=$(az ad signed-in-user show --query id -o tsv)
+
+MSYS_NO_PATHCONV=1 az role assignment create \
+  --assignee-object-id "$OBJ" --assignee-principal-type User \
+  --role "Key Vault Administrator" \
+  --scope "/subscriptions/$SUB/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$KEY_VAULT"
+
+
+set -a; source .env; set +a
+
+az keyvault secret set --vault-name "$KEY_VAULT" --name mysql-root-password --value "$MYSQL_ROOT_PASSWORD"
+az keyvault secret set --vault-name "$KEY_VAULT" --name mysql-user-cuidado --value "$MYSQL_USER_CUIDADO"
+az keyvault secret set --vault-name "$KEY_VAULT" --name mysql-password-cuidado --value "$MYSQL_PASSWORD_CUIDADO"
+az keyvault secret set --vault-name "$KEY_VAULT" --name jwt-secret --value "$PETBUDDIES_JWT_SECRET"
+az keyvault secret set --vault-name "$KEY_VAULT" --name gemini-api-key --value "$GEMINI_API_KEY"
+
+
+ACR_USER=$(az acr credential show -n "$ACR_NAME" -g "$RESOURCE_GROUP" --query username -o tsv)
+ACR_PASS=$(az acr credential show -n "$ACR_NAME" -g "$RESOURCE_GROUP" --query 'passwords[0].value' -o tsv)
+STORAGE_KEY=$(az storage account keys list --account-name "$STORAGE_ACCOUNT" -g "$RESOURCE_GROUP" --query '[0].value' -o tsv)
+
+az keyvault secret set --vault-name "$KEY_VAULT" --name acr-username --value "$ACR_USER"
+az keyvault secret set --vault-name "$KEY_VAULT" --name acr-password --value "$ACR_PASS"
+az keyvault secret set --vault-name "$KEY_VAULT" --name storage-account-key --value "$STORAGE_KEY"
+
+az keyvault secret list --vault-name "$KEY_VAULT" --query "[].name" -o tsv | sort
+
+
+# ---------------------------------------------------------------------
+# 04 — ACI DO MYSQL (com o volume da storage account)
+# ---------------------------------------------------------------------
+RESOURCE_GROUP=rg-petbuddies-devops
+LOCATION=chilecentral
+ACR_NAME=petbuddiesrm565339
+KEY_VAULT=kv-petbuddies-rm565339
+STORAGE_ACCOUNT=stpetbuddiesrm565339
+FILE_SHARE=mysql-cuidado-volume
+TAG=v1
+IMG_MYSQL=rm565339-mysql-petbuddies
+ACI_MYSQL=rm565339-mysql
+DNS_MYSQL=petbuddies-mysql-rm565339
+FQDN_MYSQL=petbuddies-mysql-rm565339.chilecentral.azurecontainer.io
+
+segredo() { az keyvault secret show --vault-name "$KEY_VAULT" --name "$1" --query value -o tsv; }
+
+MSYS_NO_PATHCONV=1 az container create \
+  -g "$RESOURCE_GROUP" -n "$ACI_MYSQL" -l "$LOCATION" \
+  --image "$ACR_NAME.azurecr.io/$IMG_MYSQL:$TAG" \
+  --cpu 2 --memory 4 --os-type Linux \
+  --dns-name-label "$DNS_MYSQL" --ports 3306 \
+  --registry-login-server "$ACR_NAME.azurecr.io" \
+  --registry-username "$(segredo acr-username)" \
+  --registry-password "$(segredo acr-password)" \
+  --azure-file-volume-account-name "$STORAGE_ACCOUNT" \
+  --azure-file-volume-account-key "$(segredo storage-account-key)" \
+  --azure-file-volume-share-name "$FILE_SHARE" \
+  --azure-file-volume-mount-path /var/lib/mysql \
+  --environment-variables \
+      MYSQL_DATABASE=petbuddies_cuidado \
+      MYSQL_USER="$(segredo mysql-user-cuidado)" \
+  --secure-environment-variables \
+      MYSQL_ROOT_PASSWORD="$(segredo mysql-root-password)" \
+      MYSQL_PASSWORD="$(segredo mysql-password-cuidado)" \
+  --restart-policy Always -o none
+
+echo "FQDN: $FQDN_MYSQL:3306/petbuddies_cuidado"
+az container logs -g "$RESOURCE_GROUP" -n "$ACI_MYSQL" | grep "ready for connections"
+
+
+# ---------------------------------------------------------------------
+# 05 — ACI DA API JAVA
+# ---------------------------------------------------------------------
+RESOURCE_GROUP=rg-petbuddies-devops
+LOCATION=chilecentral
+ACR_NAME=petbuddiesrm565339
+KEY_VAULT=kv-petbuddies-rm565339
+TAG=v1
+IMG_JAVA=rm565339-api-java
+ACI_JAVA=rm565339-api-java
+DNS_JAVA=petbuddies-java-rm565339
+FQDN_MYSQL=petbuddies-mysql-rm565339.chilecentral.azurecontainer.io
+FQDN_JAVA=petbuddies-java-rm565339.chilecentral.azurecontainer.io
+
+segredo() { az keyvault secret show --vault-name "$KEY_VAULT" --name "$1" --query value -o tsv; }
+
+az container create \
+  -g "$RESOURCE_GROUP" -n "$ACI_JAVA" -l "$LOCATION" \
+  --image "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG" \
+  --cpu 1 --memory 2 --os-type Linux \
+  --dns-name-label "$DNS_JAVA" --ports 8080 \
+  --registry-login-server "$ACR_NAME.azurecr.io" \
+  --registry-username "$(segredo acr-username)" \
+  --registry-password "$(segredo acr-password)" \
+  --environment-variables \
+      SPRING_PROFILES_ACTIVE=docker \
+      MYSQL_URL="jdbc:mysql://$FQDN_MYSQL:3306/petbuddies_cuidado" \
+      MYSQL_USER="$(segredo mysql-user-cuidado)" \
+  --secure-environment-variables \
+      MYSQL_PASSWORD="$(segredo mysql-password-cuidado)" \
+      PETBUDDIES_JWT_SECRET="$(segredo jwt-secret)" \
+      GEMINI_API_KEY="$(segredo gemini-api-key)" \
+  --restart-policy Always -o none
+
+echo "cuidado: http://$FQDN_JAVA:8080/swagger-ui.html"
+az container logs -g "$RESOURCE_GROUP" -n "$ACI_JAVA" | tail -20
+
+
+# ---------------------------------------------------------------------
+# 99 — DESTRUIR TUDO
+# ---------------------------------------------------------------------
+RESOURCE_GROUP=rg-petbuddies-devops
+KEY_VAULT=kv-petbuddies-rm565339
+
+az group delete -n "$RESOURCE_GROUP" --yes --no-wait
+
+az keyvault purge --name "$KEY_VAULT"

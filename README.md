@@ -4,7 +4,7 @@
 > todos os recursos criados via Azure CLI.
 
 **Escopo desta entrega:** a Sprint 3 cobre **uma** disciplina, e a escolhida é **Java Advanced** — a
-API de cuidado e o banco Oracle, ambos em container, provisionados por Azure CLI.
+API de cuidado e o banco MySQL, ambos em container, provisionados por Azure CLI.
 
 ## Equipe
 
@@ -24,7 +24,7 @@ acompanha o plano de cuidado preventivo e recebe prescrições; a clínica regis
 procedimentos e atendimentos, e configura o catálogo de protocolos que ela oferece.
 
 O tutor entra pelo aplicativo; a veterinária usa as mesmas rotas com perfil próprio. A autenticação
-é JWT, emitida pela própria API, e o histórico fica num Oracle na nuvem.
+é JWT, emitida pela própria API, e o histórico fica num MySQL na nuvem.
 
 ## Benefícios para o negócio
 
@@ -44,9 +44,10 @@ O tutor entra pelo aplicativo; a veterinária usa as mesmas rotas com perfil pr�
 
 | Recurso Azure | Nome | Conteúdo |
 |---|---|---|
-| Container Registry | `petbuddiesrm565339` | imagens do Oracle e da API |
-| Key Vault | `kv-petbuddies-rm565339` | senhas do banco, segredo JWT e credenciais do registry |
-| Container Instance | `rm565339-oracle` | Oracle XE 21c · 2 vCPU / 4 GB · porta 1521 |
+| Container Registry | `petbuddiesrm565339` | imagens do MySQL e da API |
+| Storage Account | `stpetbuddiesrm565339` | file share `mysql-cuidado-volume`, volume persistente do banco |
+| Key Vault | `kv-petbuddies-rm565339` | senhas do banco, segredo JWT, credenciais do registry e chave da storage account |
+| Container Instance | `rm565339-mysql` | MySQL 8.0 · 2 vCPU / 4 GB · porta 3306 |
 | Container Instance | `rm565339-api-java` | Java 21 · Spring Boot 3.4 · 1 vCPU / 2 GB · porta 8080 |
 
 Grupo de recursos `rg-petbuddies-devops`, região `chilecentral`. A autenticação é JWT, emitido pela
@@ -54,12 +55,13 @@ própria API.
 
 ![Arquitetura da solução na Azure](docs/arquitetura.png)
 
-O **Key Vault** guarda os sete segredos (usuário e senha do banco, segredo JWT, chave da IA e as
-credenciais do registry). Nenhum deles aparece em script, log ou variável visível: os scripts os leem do cofre no
-momento do `az container create` e os injetam como `--secure-environment-variables`.
+O **Key Vault** guarda os oito segredos (usuário e senha do banco, segredo JWT, chave da IA, chave da
+storage account e as credenciais do registry). Nenhum deles aparece em script, log ou variável
+visível: os scripts os leem do cofre no momento do `az container create` e os injetam como
+`--secure-environment-variables`.
 
 **Um schema, criado pela própria aplicação.** O usuário do banco nasce com o container, pelas
-variáveis que a imagem do Oracle consome; as 16 tabelas e a carga vêm depois, pelo Flyway, na subida
+variáveis que a imagem do MySQL consome; as tabelas e a carga vêm depois, pelo Flyway, na subida
 da API. Não há passo manual de schema entre um e outro.
 
 ---
@@ -98,12 +100,10 @@ mesma rede:
 ```bash
 ./scripts/02_build-push.sh        # clona a API em .build/ e constrói as imagens
 docker compose up -d --build
-docker compose ps                 # aguardar o Oracle ficar healthy (~5 min no primeiro start)
+docker compose ps                 # aguardar o MySQL ficar healthy
 curl http://localhost:8080/swagger-ui.html
 docker compose down -v            # derruba e APAGA o volume
 ```
-
-A imagem do Oracle é amd64, então em Mac ARM ela roda emulada e sobe devagar. Na nuvem é nativo.
 
 > Cada script pode gravar a própria saída, o que deixa a evidência da execução em arquivo:
 > `./scripts/01_acr.sh > 01_acr.log`. Os `.log` ficam fora do Git — eles ecoam nome de recurso e
@@ -124,8 +124,9 @@ de Key Vault. **Nenhum recurso é criado aqui.**
 ./scripts/01_acr.sh
 ```
 
-Cria o grupo de recursos `rg-petbuddies-devops` e o ACR `petbuddiesrm565339` (SKU Basic, admin
-habilitado — é com a credencial de admin que os ACIs se autenticam no registry).
+Cria o grupo de recursos `rg-petbuddies-devops`, o ACR `petbuddiesrm565339` (SKU Basic, admin
+habilitado — é com a credencial de admin que os ACIs se autenticam no registry) e a storage account
+`stpetbuddiesrm565339` com o file share `mysql-cuidado-volume` — o volume persistente do MySQL.
 
 ### 5. Construir e publicar as imagens
 
@@ -136,11 +137,11 @@ habilitado — é com a credencial de admin que os ACIs se autenticam no registr
 Clona a API, constrói as duas imagens em `linux/amd64` e as envia ao ACR:
 
 ```bash
-az acr import --name petbuddiesrm565339 --source docker.io/gvenzl/oracle-xe:21-slim \
-              --image rm565339-oracle-petbuddies:v1
+az acr import --name petbuddiesrm565339 --source docker.io/library/mysql:8.0 \
+              --image rm565339-mysql-petbuddies:v1
 docker build --platform linux/amd64 -t petbuddiesrm565339.azurecr.io/rm565339-api-java:v1 api/
 az acr login --name petbuddiesrm565339
-docker push petbuddiesrm565339.azurecr.io/rm565339-oracle-petbuddies:v1
+docker push petbuddiesrm565339.azurecr.io/rm565339-mysql-petbuddies:v1
 docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
 ```
 
@@ -153,27 +154,14 @@ docker push petbuddiesrm565339.azurecr.io/rm565339-api-java:v1
 ### 7. Subir os containers
 
 ```bash
-./scripts/04_aci-oracle.sh     # espera o banco abrir antes de retornar
+./scripts/04_aci-mysql.sh      # espera o banco abrir antes de retornar
 ./scripts/05_aci-java.sh
 ```
 
-O schema é criado na subida da aplicação, pelo **Flyway**: 16 tabelas mais o seed de demonstração.
+O schema é criado na subida da aplicação, pelo **Flyway**: as tabelas mais o seed de demonstração
+(`V2__seed_demonstracao.sql`), que já cobre a carga inicial das duas tabelas do CRUD.
 
-### 8. Carga de demonstração
-
-```bash
-sqlplus PETBUDDIES_CUIDADO/<senha>@petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1 @carga_demonstracao.sql
-```
-
-Insere dois tutores e três animais com conteúdo de negócio nas duas tabelas do CRUD, para que a
-consulta já tenha o que mostrar e a alteração e a exclusão incidam sobre dados reais. Um dos tutores
-leva dois animais, então o lado **N** do relacionamento aparece de fato.
-
-Nenhum id é escrito à mão: as chaves são `GENERATED BY DEFAULT ON NULL AS IDENTITY`, e gravar um id
-explícito não avança o gerador — o próximo animal criado pela aplicação colidiria com a carga. O
-vínculo do animal com o dono sai de uma subconsulta pelo e-mail.
-
-### 9. Encerrar
+### 8. Encerrar
 
 ```bash
 ./scripts/99_destroy.sh
@@ -186,7 +174,7 @@ vínculo do animal com o dono sai de uma subconsulta pelo e-mail.
 | Serviço | URL |
 |---|---|
 | API de cuidado (Swagger) | http://petbuddies-java-rm565339.chilecentral.azurecontainer.io:8080/swagger-ui.html |
-| Oracle | `petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1` |
+| MySQL | `petbuddies-mysql-rm565339.chilecentral.azurecontainer.io:3306/petbuddies_cuidado` |
 
 Usuários de demonstração: `maria@email.com` (tutor) e `ana@clinica.com` (veterinária), senha
 `petbuddies123`.
@@ -252,21 +240,22 @@ az container list --resource-group rg-petbuddies-devops --output table
 
 Há dois caminhos, e os dois valem como evidência.
 
-**a) Pelo próprio container**, sem instalar nada na máquina — o `sqlplus` já vive na imagem:
+**a) Pelo próprio container**, sem instalar nada na máquina — o `mysql` client já vive na imagem:
 
 ```bash
-az container exec --resource-group rg-petbuddies-devops --name rm565339-oracle \
+az container exec --resource-group rg-petbuddies-devops --name rm565339-mysql \
   --exec-command "/bin/bash"
 
 # já dentro do container:
-sqlplus PETBUDDIES_CUIDADO/<senha>@localhost:1521/XEPDB1
+mysql -u PETBUDDIES_CUIDADO -p petbuddies_cuidado
 ```
 
-**b) De um cliente externo** (SQL Developer, DataGrip), conectando em `petbuddies-oracle-rm565339.chilecentral.azurecontainer.io:1521/XEPDB1` com o usuário
-`PETBUDDIES_CUIDADO` e execute, após cada operação:
+**b) De um cliente externo** (MySQL Workbench, DataGrip), conectando em
+`petbuddies-mysql-rm565339.chilecentral.azurecontainer.io:3306`, database `petbuddies_cuidado`, com
+o usuário `PETBUDDIES_CUIDADO` e execute, após cada operação:
 
 ```sql
-SELECT a.ID_ANIMAL, a.NM_NOME_ANIMAL, a.TP_ESPECIE, a.PS_PESO,
+SELECT a.ID_ANIMAL, a.NM_NOME_ANIMAL, a.ES_ESPECIE, a.NR_PESO,
        r.NM_NOME_RESPONSAVEL, r.EM_EMAIL
   FROM T_PB_ANIMAL a
   JOIN T_PB_RESPONSAVEL r ON r.ID_RESPONSAVEL = a.ID_RESPONSAVEL
@@ -293,8 +282,8 @@ O DDL completo das tabelas está em [`script_bd.sql`](script_bd.sql).
 **`az acr build` não é usado.** ACR Tasks é bloqueado nesta assinatura (`TasksOperationsNotAllowed`,
 restrição do Azure for Students). O build é local com `docker build` + `docker push`.
 
-**`--platform linux/amd64` é obrigatório.** O ACI executa apenas amd64 e a imagem `gvenzl/oracle-xe`
-só publica amd64. Em um Mac ARM, sem a flag, a imagem sobe no ACI e morre em laço.
+**`--platform linux/amd64` é obrigatório.** O ACI executa apenas amd64. Em um Mac ARM, sem a flag, a
+imagem sobe no ACI e morre em laço.
 
 **A aplicação é compilada no host, não dentro da imagem.** O jar é bytecode e não depende de
 arquitetura, então compilar nativo em ARM e empacotar sobre uma base amd64 dá a mesma imagem sem
@@ -309,8 +298,7 @@ serviço para configurar o outro.
 ```
 .
 ├── README.md                       este documento — o roteiro de deploy
-├── script_bd.sql                   DDL das 16 tabelas
-├── carga_demonstracao.sql          carga inicial das duas tabelas do CRUD
+├── script_bd.sql                   DDL das tabelas
 ├── .env.example                    modelo das variáveis; o .env não vai para o Git
 ├── docker-compose.yml              execução local
 ├── docs/arquitetura.png            desenho da solução na Azure
@@ -321,17 +309,19 @@ serviço para configurar o outro.
 │   └── src/
 └── scripts/
     ├── 00_preflight.sh             confere o ambiente; não cria nada
-    ├── 01_acr.sh                   grupo de recursos + Container Registry
+    ├── 01_acr.sh                   grupo de recursos + Container Registry + Storage Account
     ├── 02_build-push.sh            build das imagens + push
     ├── 03_key-vault.sh             cofre e segredos
-    ├── 04_aci-oracle.sh            container do banco
+    ├── 04_aci-mysql.sh             container do banco, com o volume da storage account
     ├── 05_aci-java.sh              container da API
     └── 99_destroy.sh               remove tudo
 ```
 
-**Sem volume no banco.** O Oracle não sobe com seus datafiles sobre Azure Files. Testado em
-2026-09-12: o container entra em `CrashLoopBackOff`, morre dez segundos após iniciar e acumula
-reinícios sem jamais abrir o banco — o Azure Files entrega um compartilhamento SMB, e o Oracle
-precisa de semântica POSIX para os datafiles. Como o schema de cada serviço
-nasce na subida da própria aplicação, pelo Flyway, um restart do container reconstrói o banco em vez
-de perdê-lo. A entrega desta Sprint não exige volume nomeado.
+**Volume no banco: Storage Account, montada direto no MySQL.** Um Oracle rodando sobre Azure Files
+como volume do ACI não funciona — testado em 2026-09-12, o container entra em `CrashLoopBackOff`,
+porque o Azure Files entrega um compartilhamento SMB e o Oracle precisa de semântica POSIX para os
+datafiles. Por isso o banco migrou para **MySQL**: a mesma storage account (`stpetbuddiesrm565339`,
+file share `mysql-cuidado-volume`) é montada em `/var/lib/mysql`. Testado em 2026-09-13: o container
+abre de primeira, sem crash loop, e a persistência foi confirmada apagando e recriando o container —
+os dados do seed voltaram com o mesmo `createdAt` de antes, ou seja, sobreviveram fora do ciclo de
+vida do container.

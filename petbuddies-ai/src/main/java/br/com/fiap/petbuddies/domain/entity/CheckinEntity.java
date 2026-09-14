@@ -35,13 +35,15 @@ public class CheckinEntity {
     @Column(name = "DH_REGISTRADO_EM", nullable = false)
     private LocalDateTime registradoEm;
 
-    // CLOB: sem @Lob o Hibernate declara VARCHAR2(255) e o validate recusa a subida.
+    // TEXT: sem @Lob o Hibernate declara VARCHAR(255) e o validate recusa a subida.
+    // length=65535 força o Hibernate a esperar TEXT em vez de TINYTEXT (default
+    // do MySQL para @Lob sem length, que trunca em 255 caracteres).
     @Lob
-    @Column(name = "TX_NARRATIVA", nullable = false)
+    @Column(name = "TX_NARRATIVA", nullable = false, length = 65535)
     private String narrativa;
 
     @Lob
-    @Column(name = "TX_OBSERVACOES_GERAIS")
+    @Column(name = "TX_OBSERVACOES_GERAIS", length = 65535)
     private String observacoesGerais;
 
     @Column(name = "DS_TIC_UTILIZADA", length = 120)
