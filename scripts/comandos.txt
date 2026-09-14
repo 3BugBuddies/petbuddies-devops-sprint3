@@ -1,20 +1,3 @@
-# =====================================================================
-# COMANDOS DO DEPLOY — ACR + STORAGE ACCOUNT + ACI (MySQL + API Java)
-# =====================================================================
-# Cola cada bloco no Git Bash, na ordem. Cada seção numerada é
-# AUTOSSUFICIENTE: já vem com as variáveis que usa, então dá pra rodar
-# qualquer seção sozinha, numa aba nova, sem precisar "lembrar" de rodar
-# outra coisa antes.
-#
-# Todo o arquivo usa "#" pra comentário (é o comentário do Bash) — dá pra
-# colar qualquer trecho, incluindo títulos e separadores, sem quebrar o
-# terminal.
-#
-# NUNCA digite segredo (senha, chave, token) direto neste arquivo — ele vai
-# pro Git. Os segredos vêm do ".env" (que é ignorado pelo Git) via
-# "source .env", no passo 03.
-
-
 # ---------------------------------------------------------------------
 # 00 — PREFLIGHT (só leitura, não cria nada)
 # ---------------------------------------------------------------------
@@ -33,11 +16,6 @@ MSYS_NO_PATHCONV=1 az role assignment list --assignee-object-id "$OBJ" \
 # ---------------------------------------------------------------------
 # 01 — RESOURCE GROUP + CONTAINER REGISTRY + STORAGE ACCOUNT
 # ---------------------------------------------------------------------
-RESOURCE_GROUP=rg-petbuddies-devops
-LOCATION=chilecentral
-ACR_NAME=petbuddiesrm565339
-STORAGE_ACCOUNT=stpetbuddiesrm565339
-FILE_SHARE=mysql-cuidado-volume
 
 az group create -n "$RESOURCE_GROUP" -l "$LOCATION" -o table
 
@@ -57,12 +35,6 @@ az storage share create --name "$FILE_SHARE" --account-name "$STORAGE_ACCOUNT" \
 # ---------------------------------------------------------------------
 # 02 — IMAGENS (import do MySQL + build/push da API Java)
 # ---------------------------------------------------------------------
-RESOURCE_GROUP=rg-petbuddies-devops
-ACR_NAME=petbuddiesrm565339
-TAG=v1
-IMG_MYSQL=rm565339-mysql-petbuddies
-IMG_MYSQL_ORIGEM=docker.io/library/mysql:8.0
-IMG_JAVA=rm565339-api-java
 
 az acr import --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" \
   --source "$IMG_MYSQL_ORIGEM" --image "$IMG_MYSQL:$TAG" --force
@@ -81,11 +53,6 @@ docker push "$ACR_NAME.azurecr.io/$IMG_JAVA:$TAG"
 # ---------------------------------------------------------------------
 # 03 — KEY VAULT E SEGREDOS (8 segredos)
 # ---------------------------------------------------------------------
-RESOURCE_GROUP=rg-petbuddies-devops
-LOCATION=chilecentral
-ACR_NAME=petbuddiesrm565339
-KEY_VAULT=kv-petbuddies-rm565339
-STORAGE_ACCOUNT=stpetbuddiesrm565339
 
 az keyvault create -n "$KEY_VAULT" -g "$RESOURCE_GROUP" -l "$LOCATION" \
   --enable-rbac-authorization true -o table
@@ -122,17 +89,6 @@ az keyvault secret list --vault-name "$KEY_VAULT" --query "[].name" -o tsv | sor
 # ---------------------------------------------------------------------
 # 04 — ACI DO MYSQL (com o volume da storage account)
 # ---------------------------------------------------------------------
-RESOURCE_GROUP=rg-petbuddies-devops
-LOCATION=chilecentral
-ACR_NAME=petbuddiesrm565339
-KEY_VAULT=kv-petbuddies-rm565339
-STORAGE_ACCOUNT=stpetbuddiesrm565339
-FILE_SHARE=mysql-cuidado-volume
-TAG=v1
-IMG_MYSQL=rm565339-mysql-petbuddies
-ACI_MYSQL=rm565339-mysql
-DNS_MYSQL=petbuddies-mysql-rm565339
-FQDN_MYSQL=petbuddies-mysql-rm565339.chilecentral.azurecontainer.io
 
 segredo() { az keyvault secret show --vault-name "$KEY_VAULT" --name "$1" --query value -o tsv; }
 
@@ -163,16 +119,6 @@ az container logs -g "$RESOURCE_GROUP" -n "$ACI_MYSQL" | grep "ready for connect
 # ---------------------------------------------------------------------
 # 05 — ACI DA API JAVA
 # ---------------------------------------------------------------------
-RESOURCE_GROUP=rg-petbuddies-devops
-LOCATION=chilecentral
-ACR_NAME=petbuddiesrm565339
-KEY_VAULT=kv-petbuddies-rm565339
-TAG=v1
-IMG_JAVA=rm565339-api-java
-ACI_JAVA=rm565339-api-java
-DNS_JAVA=petbuddies-java-rm565339
-FQDN_MYSQL=petbuddies-mysql-rm565339.chilecentral.azurecontainer.io
-FQDN_JAVA=petbuddies-java-rm565339.chilecentral.azurecontainer.io
 
 segredo() { az keyvault secret show --vault-name "$KEY_VAULT" --name "$1" --query value -o tsv; }
 
